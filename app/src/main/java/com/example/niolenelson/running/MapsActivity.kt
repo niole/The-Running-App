@@ -24,6 +24,8 @@ class MapsActivity :
 
     private lateinit var geoContext: GeoApiContext
 
+    private lateinit var routeBounds: LatLngBounds
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -39,17 +41,27 @@ class MapsActivity :
         mMap.addMarker(MarkerOptions().position(home).title("Home"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(home))
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
+        mMap.uiSettings.setZoomControlsEnabled(true)
 
         val point = javaHome
         val bounds = getBounds(point)
         val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
-        val others: Array<SnappedPoint> = (surroundingBounds.flatMap {
+        setMarkersInBounds(surroundingBounds)
+        setMarkersInBounds(
+                getSurroundingGridBounds(JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude), JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude))
+        )
+        setMarkersInBounds(
+            getSurroundingGridBounds(JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude), JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude))
+        )
+    }
+
+    private fun setMarkersInBounds(surroundingBounds: Array<LatLngBounds>) {
+        val markerAddresses: Array<SnappedPoint> = (surroundingBounds.flatMap {
             getPointsInBounds(
                     JavaLatLng(it.northeast.latitude, it.northeast.longitude),
                     JavaLatLng(it.southwest.latitude, it.southwest.longitude)
             ).asIterable()
         }).toTypedArray()
-        val markerAddresses = getPointsInBounds(bounds.northeast, bounds.southwest).plus(others)
         setMarkers(markerAddresses)
     }
 
@@ -97,6 +109,11 @@ class MapsActivity :
         val bottomLeftSquare = LatLngBounds(
                 LatLng(southwest.lat - squareHeight, southwest.lng - squareWidth),
                 LatLng(northeast.lat - squareHeight, northeast.lng - squareWidth)
+        )
+
+        routeBounds = LatLngBounds(
+            bottomLeftSquare.southwest,
+            topRightSquare.northeast
         )
 
         return arrayOf(
