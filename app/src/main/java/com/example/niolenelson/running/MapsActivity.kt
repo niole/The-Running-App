@@ -18,6 +18,10 @@ class MapsActivity :
 
     private val home = LatLng(37.86612570,-122.25051598)
 
+    private val routeDistanceMiles = 3
+
+    private val routeError = .5
+
     private val javaHome = JavaLatLng(home.latitude, home.longitude)
 
     private lateinit var mMap: GoogleMap
@@ -25,6 +29,8 @@ class MapsActivity :
     private lateinit var geoContext: GeoApiContext
 
     private lateinit var routeBounds: LatLngBounds
+
+    private var pathData = arrayOf<SnappedPoint>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,23 +52,23 @@ class MapsActivity :
         val point = javaHome
         val bounds = getBounds(point)
         val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
-        setMarkersInBounds(surroundingBounds)
-        setMarkersInBounds(
+        setPathDataInBounds(surroundingBounds)
+        setPathDataInBounds(
                 getSurroundingGridBounds(JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude), JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude))
         )
-        setMarkersInBounds(
-            getSurroundingGridBounds(JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude), JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude))
-        )
+
+        setMarkers(pathData)
     }
 
-    private fun setMarkersInBounds(surroundingBounds: Array<LatLngBounds>) {
+    private fun setPathDataInBounds(surroundingBounds: Array<LatLngBounds>) {
         val markerAddresses: Array<SnappedPoint> = (surroundingBounds.flatMap {
             getPointsInBounds(
                     JavaLatLng(it.northeast.latitude, it.northeast.longitude),
                     JavaLatLng(it.southwest.latitude, it.southwest.longitude)
             ).asIterable()
         }).toTypedArray()
-        setMarkers(markerAddresses)
+
+        pathData = pathData.plus(markerAddresses)
     }
 
     /**
