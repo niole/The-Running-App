@@ -9,20 +9,26 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.maps.*
 import com.google.maps.model.Bounds
+import com.google.maps.model.ComponentFilter
+import com.google.maps.model.LocationType
 import com.google.maps.model.SnappedPoint
 import com.google.maps.model.LatLng as JavaLatLng
+import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.Polyline
+
+
 
 class MapsActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
 
-    private val home = LatLng(37.86612570,-122.25051598)
+    private val startingPoint = LatLng(37.86612570,-122.25051598)
 
     private val routeDistanceMiles = 3
 
     private val routeError = .5
 
-    private val javaHome = JavaLatLng(home.latitude, home.longitude)
+    private val javaStartingPoint = JavaLatLng(startingPoint.latitude, startingPoint.longitude)
 
     private lateinit var mMap: GoogleMap
 
@@ -30,7 +36,7 @@ class MapsActivity :
 
     private lateinit var routeBounds: LatLngBounds
 
-    private var pathData = arrayOf<SnappedPoint>()
+    private var pathData: Map<String, SnappedPoint> = mapOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,20 +50,28 @@ class MapsActivity :
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
 
-        mMap.addMarker(MarkerOptions().position(home).title("Home"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(home))
+        mMap.addMarker(MarkerOptions().position(startingPoint).title("Home"))
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(startingPoint))
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
         mMap.uiSettings.setZoomControlsEnabled(true)
 
-        val point = javaHome
+        val point = javaStartingPoint
         val bounds = getBounds(point)
         val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
         setPathDataInBounds(surroundingBounds)
         setPathDataInBounds(
-                getSurroundingGridBounds(JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude), JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude))
+                getSurroundingGridBounds(
+                        JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude),
+                        JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude)
+                )
         )
 
-        setMarkers(pathData)
+        val pathDataValues = pathData.values
+
+//        setMarkers(pathDataValues.toTypedArray(), true)
+
+        googleMap.addPolyline(PolylineOptions()
+                .add(*pathDataValues.map{ LatLng(it.location.lat, it.location.lng) }.toTypedArray()))
     }
 
     private fun setPathDataInBounds(surroundingBounds: Array<LatLngBounds>) {
@@ -68,7 +82,9 @@ class MapsActivity :
             ).asIterable()
         }).toTypedArray()
 
-        pathData = pathData.plus(markerAddresses)
+        markerAddresses.forEach {
+            pathData = pathData.plus(Pair(it.placeId, it))
+        }
     }
 
     /**
@@ -143,11 +159,26 @@ class MapsActivity :
         return RoadsApi.snapToRoads(geoContext, true, northeast, southwest).await()
     }
 
-    private fun setMarkers(points: Array<SnappedPoint>) {
+    private fun setMarkers(points: Array<SnappedPoint>, color: Boolean = false) {
        for (point in points) {
            val m = MarkerOptions().position(LatLng(point.location.lat, point.location.lng)).title(point.placeId)
+           if (color) {
+               m.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+           }
            mMap.addMarker(m)
        }
     }
 
+//    private fun getDistancesForPoints() {
+//        for (i in 0..(pathData.size - 1)) {
+//            for (j in 0..(pathData.size - 1)) {
+//                if (i != j) {
+//
+//                }
+//            }
+//        }
+//       pathData
+//        DistanceMatrixApiRequest.origins
+//
+//    }
 }
