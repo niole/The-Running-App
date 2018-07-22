@@ -9,24 +9,67 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.maps.*
 import com.google.maps.model.Bounds
-import com.google.maps.model.ComponentFilter
-import com.google.maps.model.LocationType
 import com.google.maps.model.SnappedPoint
 import com.google.maps.model.LatLng as JavaLatLng
 import com.google.android.gms.maps.model.PolylineOptions
-import com.google.android.gms.maps.model.Polyline
 
 
+object Haversine {
+    fun distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double, unit: Char): Double {
+        val theta = lon1 - lon2
+        var dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta))
+        dist = Math.acos(dist)
+        dist = rad2deg(dist)
+        dist = dist * 60.0 * 1.1515
+        if (unit == 'K') {
+            dist = dist * 1.609344
+        } else if (unit == 'N') {
+            dist = dist * 0.8684
+        }
+        return dist
+    }
+
+    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+    /*::  This function converts decimal degrees to radians             :*/
+    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+    private fun deg2rad(deg: Double): Double {
+        return deg * Math.PI / 180.0
+    }
+
+    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+    /*::  This function converts radians to decimal degrees             :*/
+    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+    private fun rad2deg(rad: Double): Double {
+        return rad * 180.0 / Math.PI
+    }
+}
 
 class MapsActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
+    private val COLOR_BLACK_ARGB = -0x1000000
+    private val COLOR_WHITE_ARGB = -0x1
+    private val COLOR_GREEN_ARGB = -0xc771c4
+    private val COLOR_PURPLE_ARGB = -0x7e387c
+    private val COLOR_ORANGE_ARGB = -0xa80e9
+    private val COLOR_BLUE_ARGB = -0x657db
+
+    private val colors = listOf(
+        COLOR_BLACK_ARGB,
+        COLOR_WHITE_ARGB,
+        COLOR_GREEN_ARGB,
+        COLOR_PURPLE_ARGB,
+        COLOR_ORANGE_ARGB,
+        COLOR_BLUE_ARGB
+    )
 
     private val startingPoint = LatLng(37.86612570,-122.25051598)
 
-    private val routeDistanceMiles = 3
+    private val routeDistanceMeters = 3
 
     private val routeError = .5
+
+    private val uniquePointDistanceKm = .1
 
     private val javaStartingPoint = JavaLatLng(startingPoint.latitude, startingPoint.longitude)
 
@@ -66,12 +109,39 @@ class MapsActivity :
                 )
         )
 
-        val pathDataValues = pathData.values
+       prunePathData()
 
-//        setMarkers(pathDataValues.toTypedArray(), true)
+       val routes: List<List<JavaLatLng>> = getCircles()
+        routes.forEachIndexed {
+            index, pathDataValues ->
+                googleMap.addPolyline(
+                        PolylineOptions()
+                        .add(*pathDataValues.map{ LatLng(it.lat, it.lng) }.toTypedArray())
+                        .color(colors[index.rem(colors.size)])
+                )
+        }
+    }
 
-        googleMap.addPolyline(PolylineOptions()
-                .add(*pathDataValues.map{ LatLng(it.location.lat, it.location.lng) }.toTypedArray()))
+    private fun prunePathData() {
+        var keptPoints = arrayOf<SnappedPoint>()
+        val prunedMap = pathData.filterValues {
+            val closePoint = keptPoints.find { seenPoint: SnappedPoint ->
+                getDistanceBetweenCoordinates(
+                        seenPoint.location.lat,
+                        it.location.lat,
+                        seenPoint.location.lng,
+                        it.location.lng
+                ) <= .5
+            }
+            if (closePoint != null) {
+                false
+            } else {
+                keptPoints = keptPoints.plus(it)
+                true
+            }
+        }
+
+       pathData = prunedMap
     }
 
     private fun setPathDataInBounds(surroundingBounds: Array<LatLngBounds>) {
@@ -85,6 +155,79 @@ class MapsActivity :
         markerAddresses.forEach {
             pathData = pathData.plus(Pair(it.placeId, it))
         }
+    }
+
+    private fun getDistanceBetweenCoordinates(lat1: Double, lat2: Double, lon1: Double, lon2: Double): Double {
+        return Haversine.distance(lat1, lon1, lat2, lon2, 'K')
+    }
+
+    /**
+     * returns distance between coords in a path in meters
+     */
+    private fun getPathDistance(path: List<JavaLatLng>): Double {
+        var distance = 0.toDouble()
+        if (path.size > 1) {
+            for (i in 1..(path.size - 1)) {
+                val curr = path[i]
+                val prev = path[i - 1]
+                distance += getDistanceBetweenCoordinates(
+                        curr.lat,
+                        prev.lat,
+                        curr.lng,
+                        prev.lng
+                )
+            }
+        }
+
+        return distance
+    }
+
+    /**
+     * Goes over Array<SnappedPoint> and picks concentric circles of points that start and end
+     * at the starting point
+     */
+    private fun getCircles(): List<List<JavaLatLng>> {
+        var circles = listOf<List<JavaLatLng>>()
+        val pathDataValues = pathData.values.toList()
+
+        for (i in 0..(pathDataValues.size - 1)) {
+            val startingPath = listOf(javaStartingPoint, pathDataValues[i].location)
+            circles = circles.plus(
+                buildCircles(
+                        startingPath,
+                        pathDataValues.take(i).plus(pathDataValues.drop(i + 1)).map { it.location },
+                        getPathDistance(startingPath)
+                ).filter { it.size > 0 }
+            )
+        }
+
+        return circles
+    }
+
+    /**
+     * could take a point, could not take a point, could go back to start
+     */
+    private fun buildCircles(pickedPoints: List<JavaLatLng>, remainingPoints: List<JavaLatLng>, distance: Double): List<List<JavaLatLng>> {
+        println("picked points $pickedPoints")
+        println("distance $distance")
+        if (remainingPoints.isNotEmpty() && distance < routeDistanceMeters) {
+            return remainingPoints.mapIndexed {
+                index: Int, it: JavaLatLng ->
+                val remainder = remainingPoints.drop(index + 1)
+                return buildCircles(
+                            pickedPoints.plus(it),
+                            remainingPoints.take(index).plus(remainder),
+                    distance + getPathDistance(listOf(pickedPoints.last(), it))
+                        )
+                        .plus(buildCircles(pickedPoints, remainder, distance))
+            }
+        }
+
+        if (Math.abs(distance - routeDistanceMeters) < routeError) {
+          return listOf(pickedPoints.plus(javaStartingPoint))
+        }
+
+        return listOf(listOf())
     }
 
     /**
@@ -169,16 +312,4 @@ class MapsActivity :
        }
     }
 
-//    private fun getDistancesForPoints() {
-//        for (i in 0..(pathData.size - 1)) {
-//            for (j in 0..(pathData.size - 1)) {
-//                if (i != j) {
-//
-//                }
-//            }
-//        }
-//       pathData
-//        DistanceMatrixApiRequest.origins
-//
-//    }
 }
