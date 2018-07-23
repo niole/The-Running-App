@@ -3,7 +3,9 @@ package com.example.niolenelson.running
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.GridLayoutManager
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.AngleGetter
 import com.example.niolenelson.running.utilities.Haversine
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -65,7 +67,9 @@ class MapsActivity :
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-        this.generated_routes_list.layoutManager = GridLayoutManager(this, 5)
+        val linearLayoutManager = LinearLayoutManager(this)
+        linearLayoutManager.orientation = LinearLayout.HORIZONTAL
+        this.generated_routes_list.layoutManager = linearLayoutManager
     }
 
     private fun setGeneratedRoutesData(generated_routes_list: RecyclerView) {
