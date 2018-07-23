@@ -2,6 +2,8 @@ package com.example.niolenelson.running
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.widget.GridLayoutManager
+import android.support.v7.widget.RecyclerView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -12,7 +14,9 @@ import com.google.maps.model.Bounds
 import com.google.maps.model.SnappedPoint
 import com.google.maps.model.LatLng as JavaLatLng
 import com.google.android.gms.maps.model.PolylineOptions
-
+import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.launch
 
 object Haversine {
     fun distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double, unit: Char): Double {
@@ -42,6 +46,32 @@ object Haversine {
     private fun rad2deg(rad: Double): Double {
         return rad * 180.0 / Math.PI
     }
+}
+
+object AngleGetter {
+
+    private fun getVectorNorm(v: JavaLatLng): Double {
+        return Math.sqrt(Math.pow(v.lat, 2.0) + Math.pow(v.lng, 2.0))
+    }
+
+    fun getAngleBetweenVectors(p1: JavaLatLng, p2: JavaLatLng): Double {
+        val p1Norm = getVectorNorm(p1)
+        val p2Norm = getVectorNorm(p2)
+        val dotProduct = (p1.lat * p2.lat) + (p1.lng * p2.lng)
+
+        return Math.acos(dotProduct / (p1Norm * p2Norm))
+    }
+
+    fun getAngleFromNorthOnUnitCircle(point: JavaLatLng): Double {
+        val p1Norm = getVectorNorm(point)
+        val p2Norm = 1
+
+        val dotProduct = (0 * point.lat) + (point.lng * 1.0)
+
+        return Math.acos(dotProduct / (p1Norm * p2Norm))
+
+    }
+
 }
 
 class MapsActivity :
@@ -81,45 +111,57 @@ class MapsActivity :
 
     private var pathData: Map<String, SnappedPoint> = mapOf()
 
+    private var generatedRoutes: List<List<JavaLatLng>> = listOf()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+        this.rv_animal_list.layoutManager = GridLayoutManager(this, 5)
+    }
+
+    private fun main(rv_animal_list: RecyclerView) {
+        val activity = this
+        launch(UI) { // launch new coroutine in background and continue
+            val point = javaStartingPoint
+            val bounds = getBounds(point)
+            val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
+            setPathDataInBounds(surroundingBounds)
+            setPathDataInBounds(
+                    getSurroundingGridBounds(
+                            JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude),
+                            JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude)
+                    )
+            )
+
+            prunePathData()
+
+            val routes: List<List<JavaLatLng>> = getCircles()
+            generatedRoutes  = routes
+
+            rv_animal_list.adapter = AnimalAdapter(generatedRoutes as ArrayList<com.google.maps.model.LatLng>, activity)
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-
+        main(this.rv_animal_list)
         mMap.addMarker(MarkerOptions().position(startingPoint).title("Home"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(startingPoint))
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
         mMap.uiSettings.setZoomControlsEnabled(true)
+    }
 
-        val point = javaStartingPoint
-        val bounds = getBounds(point)
-        val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
-        setPathDataInBounds(surroundingBounds)
-        setPathDataInBounds(
-                getSurroundingGridBounds(
-                        JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude),
-                        JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude)
-                )
-        )
-
-       prunePathData()
-
-       val routes: List<List<JavaLatLng>> = getCircles()
-        routes.forEachIndexed {
-            index, pathDataValues ->
-                googleMap.addPolyline(
-                        PolylineOptions()
+    fun drawRouteAtIndex(index: Int) {
+        val pathDataValues = generatedRoutes[index]
+        mMap.addPolyline(
+                PolylineOptions()
                         .add(*pathDataValues.map{ LatLng(it.lat, it.lng) }.toTypedArray())
                         .color(colors[index.rem(colors.size)])
-                )
-        }
+        )
     }
 
     private fun prunePathData() {
@@ -196,7 +238,8 @@ class MapsActivity :
                 buildCircles(
                         startingPath,
                         pathDataValues.take(i).plus(pathDataValues.drop(i + 1)).map { it.location },
-                        getPathDistance(startingPath)
+                        getPathDistance(startingPath),
+                        AngleGetter.getAngleFromNorthOnUnitCircle(javaStartingPoint)
                 ).filter { it.size > 0 }
             )
         }
@@ -207,26 +250,27 @@ class MapsActivity :
     /**
      * could take a point, could not take a point, could go back to start
      */
-    private fun buildCircles(pickedPoints: List<JavaLatLng>, remainingPoints: List<JavaLatLng>, distance: Double): List<List<JavaLatLng>> {
-        println("picked points $pickedPoints")
-        println("distance $distance")
-        if (remainingPoints.isNotEmpty() && distance < routeDistanceMeters) {
-            return remainingPoints.mapIndexed {
-                index: Int, it: JavaLatLng ->
-                val remainder = remainingPoints.drop(index + 1)
-                return buildCircles(
+    private fun buildCircles(pickedPoints: List<JavaLatLng>, remainingPoints: List<JavaLatLng>, distance: Double, angleSoFar: Double): List<List<JavaLatLng>> {
+        val angle = AngleGetter.getAngleFromNorthOnUnitCircle(pickedPoints.last())
+        val totalAngle = (angle - angleSoFar) + angleSoFar
+        if (totalAngle < Math.PI) {
+            if (remainingPoints.isNotEmpty() && distance < routeDistanceMeters) {
+                return remainingPoints.mapIndexed { index: Int, it: JavaLatLng ->
+                    val remainder = remainingPoints.drop(index + 1)
+                    return buildCircles(
                             pickedPoints.plus(it),
                             remainingPoints.take(index).plus(remainder),
-                    distance + getPathDistance(listOf(pickedPoints.last(), it))
-                        )
-                        .plus(buildCircles(pickedPoints, remainder, distance))
+                            distance + getPathDistance(listOf(pickedPoints.last(), it)),
+                            totalAngle
+                            )
+                            .plus(buildCircles(pickedPoints, remainder, distance, angle))
+                }
+            }
+
+            if (Math.abs(distance - routeDistanceMeters) < routeError) {
+                return listOf(pickedPoints.plus(javaStartingPoint))
             }
         }
-
-        if (Math.abs(distance - routeDistanceMeters) < routeError) {
-          return listOf(pickedPoints.plus(javaStartingPoint))
-        }
-
         return listOf(listOf())
     }
 
