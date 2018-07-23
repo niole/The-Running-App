@@ -4,6 +4,8 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
+import com.example.niolenelson.running.utilities.AngleGetter
+import com.example.niolenelson.running.utilities.Haversine
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -17,62 +19,6 @@ import com.google.android.gms.maps.model.PolylineOptions
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
-
-object Haversine {
-    fun distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double, unit: Char): Double {
-        val theta = lon1 - lon2
-        var dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta))
-        dist = Math.acos(dist)
-        dist = rad2deg(dist)
-        dist = dist * 60.0 * 1.1515
-        if (unit == 'K') {
-            dist = dist * 1.609344
-        } else if (unit == 'N') {
-            dist = dist * 0.8684
-        }
-        return dist
-    }
-
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    /*::  This function converts decimal degrees to radians             :*/
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    private fun deg2rad(deg: Double): Double {
-        return deg * Math.PI / 180.0
-    }
-
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    /*::  This function converts radians to decimal degrees             :*/
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    private fun rad2deg(rad: Double): Double {
-        return rad * 180.0 / Math.PI
-    }
-}
-
-object AngleGetter {
-
-    private fun getVectorNorm(v: JavaLatLng): Double {
-        return Math.sqrt(Math.pow(v.lat, 2.0) + Math.pow(v.lng, 2.0))
-    }
-
-    fun getAngleBetweenVectors(p1: JavaLatLng, p2: JavaLatLng): Double {
-        val p1Norm = getVectorNorm(p1)
-        val p2Norm = getVectorNorm(p2)
-        val dotProduct = (p1.lat * p2.lat) + (p1.lng * p2.lng)
-
-        return Math.acos(dotProduct / (p1Norm * p2Norm))
-    }
-
-    fun getAngleFromNorthOnUnitCircle(point: JavaLatLng): Double {
-        val p1Norm = getVectorNorm(point)
-        val p2Norm = 1
-
-        val dotProduct = (0 * point.lat) + (point.lng * 1.0)
-
-        return Math.acos(dotProduct / (p1Norm * p2Norm))
-
-    }
-
-}
 
 class MapsActivity :
         AppCompatActivity(),
@@ -122,7 +68,7 @@ class MapsActivity :
         this.generated_routes_list.layoutManager = GridLayoutManager(this, 5)
     }
 
-    private fun main(generated_routes_list: RecyclerView) {
+    private fun setGeneratedRoutesData(generated_routes_list: RecyclerView) {
         val activity = this
         launch(UI) {
             val point = javaStartingPoint
@@ -148,7 +94,7 @@ class MapsActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-        main(this.generated_routes_list)
+        setGeneratedRoutesData(this.generated_routes_list)
         mMap.addMarker(MarkerOptions().position(startingPoint).title("Home"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(startingPoint))
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
