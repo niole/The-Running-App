@@ -42,7 +42,7 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
     // Binds each animal in the ArrayList to a view
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
         if (holder != null && holder.itemView != null) {
-            if (holder.itemView.isSelected()) {
+            if (position == selectedPosition) {
                 setSelectedStyle(holder?.tvGeneratedRoutesType!!)
             } else {
                 setNotSelectedStyle(holder?.tvGeneratedRoutesType!!)
@@ -54,11 +54,9 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
             _ ->
             if (selectedPosition > -1) {
                 val oldView = context.generated_routes_list.layoutManager.findViewByPosition(selectedPosition).findViewById<TextView>(R.id.generated_route)
-                oldView.setSelected(false)
                 setNotSelectedStyle(oldView)
             }
             selectedPosition = position
-            holder?.itemView?.setSelected(true)
             setSelectedStyle(holder?.tvGeneratedRoutesType!!)
             context.drawRouteAtIndex(position)
         }
