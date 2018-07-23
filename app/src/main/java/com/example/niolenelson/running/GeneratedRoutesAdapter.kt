@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.example.niolenelson.running.R.id.generated_route
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.route_item.view.*
 import com.google.maps.model.LatLng as JavaLatLng
