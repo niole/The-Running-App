@@ -99,7 +99,7 @@ class MapsActivity :
 
     private val routeError = .5
 
-    private val uniquePointDistanceKm = .1
+    private val uniquePointDistanceKm = .5
 
     private val javaStartingPoint = JavaLatLng(startingPoint.latitude, startingPoint.longitude)
 
@@ -119,12 +119,12 @@ class MapsActivity :
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-        this.rv_animal_list.layoutManager = GridLayoutManager(this, 5)
+        this.generated_routes_list.layoutManager = GridLayoutManager(this, 5)
     }
 
-    private fun main(rv_animal_list: RecyclerView) {
+    private fun main(generated_routes_list: RecyclerView) {
         val activity = this
-        launch(UI) { // launch new coroutine in background and continue
+        launch(UI) {
             val point = javaStartingPoint
             val bounds = getBounds(point)
             val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
@@ -141,14 +141,14 @@ class MapsActivity :
             val routes: List<List<JavaLatLng>> = getCircles()
             generatedRoutes  = routes
 
-            rv_animal_list.adapter = AnimalAdapter(generatedRoutes as ArrayList<com.google.maps.model.LatLng>, activity)
+            generated_routes_list.adapter = GeneratedRoutesAdapter(generatedRoutes as ArrayList<com.google.maps.model.LatLng>, activity)
         }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-        main(this.rv_animal_list)
+        main(this.generated_routes_list)
         mMap.addMarker(MarkerOptions().position(startingPoint).title("Home"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(startingPoint))
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
@@ -173,7 +173,7 @@ class MapsActivity :
                         it.location.lat,
                         seenPoint.location.lng,
                         it.location.lng
-                ) <= .5
+                ) <= uniquePointDistanceKm
             }
             if (closePoint != null) {
                 false
@@ -344,16 +344,6 @@ class MapsActivity :
 
     private fun getPointsInBounds(northeast: JavaLatLng, southwest: JavaLatLng): Array<SnappedPoint> {
         return RoadsApi.snapToRoads(geoContext, true, northeast, southwest).await()
-    }
-
-    private fun setMarkers(points: Array<SnappedPoint>, color: Boolean = false) {
-       for (point in points) {
-           val m = MarkerOptions().position(LatLng(point.location.lat, point.location.lng)).title(point.placeId)
-           if (color) {
-               m.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
-           }
-           mMap.addMarker(m)
-       }
     }
 
 }
