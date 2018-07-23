@@ -43,9 +43,9 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
         if (holder != null && holder.itemView != null) {
             if (position == selectedPosition) {
-                setSelectedStyle(holder?.tvGeneratedRoutesType!!)
+                setSelectedStyle(holder.tvGeneratedRoutesType!!)
             } else {
-                setNotSelectedStyle(holder?.tvGeneratedRoutesType!!)
+                setNotSelectedStyle(holder.tvGeneratedRoutesType!!)
             }
         }
 
@@ -54,8 +54,11 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
             _ ->
             if (selectedPosition > -1) {
                 context.removeRouteAtIndex(selectedPosition)
-                val oldView = context.generated_routes_list.layoutManager.findViewByPosition(selectedPosition).findViewById<TextView>(R.id.generated_route)
-                setNotSelectedStyle(oldView)
+                val oldView = context.generated_routes_list.layoutManager.findViewByPosition(selectedPosition)
+                if (oldView != null) {
+                    val visibleContent = oldView.findViewById<TextView>(R.id.generated_route)
+                    setNotSelectedStyle(visibleContent)
+                }
             }
             selectedPosition = position
             setSelectedStyle(holder?.tvGeneratedRoutesType!!)
