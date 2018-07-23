@@ -53,6 +53,7 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
         holder?.tvGeneratedRoutesType?.setOnClickListener {
             _ ->
             if (selectedPosition > -1) {
+                context.removeRouteAtIndex(selectedPosition)
                 val oldView = context.generated_routes_list.layoutManager.findViewByPosition(selectedPosition).findViewById<TextView>(R.id.generated_route)
                 setNotSelectedStyle(oldView)
             }

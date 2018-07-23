@@ -61,6 +61,8 @@ class MapsActivity :
 
     private var generatedRoutes: List<List<JavaLatLng>> = listOf()
 
+    private var currentPolylines: Map<Int, Polyline> = mapOf()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -105,13 +107,23 @@ class MapsActivity :
         mMap.uiSettings.setZoomControlsEnabled(true)
     }
 
+    fun removeRouteAtIndex(index: Int) {
+        val line = currentPolylines.get(index)
+        if (line != null) {
+            line.remove()
+            currentPolylines = currentPolylines.minus(index)
+        }
+    }
+
     fun drawRouteAtIndex(index: Int) {
         val pathDataValues = generatedRoutes[index]
-        mMap.addPolyline(
+        val newLine = mMap.addPolyline(
                 PolylineOptions()
                         .add(*pathDataValues.map{ LatLng(it.lat, it.lng) }.toTypedArray())
                         .color(colors[index.rem(colors.size)])
         )
+
+      currentPolylines = currentPolylines.plus(Pair(index, newLine))
     }
 
     private fun prunePathData() {
