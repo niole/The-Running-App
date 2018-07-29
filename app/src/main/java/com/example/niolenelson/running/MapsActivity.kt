@@ -4,9 +4,6 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.view.View
-import android.widget.Button
-import android.widget.EditText
 import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.AngleGetter
 import com.example.niolenelson.running.utilities.Haversine
@@ -68,23 +65,14 @@ class MapsActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+        routeDistanceMeters = intent.getIntExtra("routeDistanceMiles", 3)
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
         val linearLayoutManager = LinearLayoutManager(this)
         linearLayoutManager.orientation = LinearLayout.HORIZONTAL
         this.generated_routes_list.layoutManager = linearLayoutManager
-    }
-
-    private fun setButton() {
-        val button = findViewById<Button>(R.id.route_length_input_submit)
-        button.setOnClickListener {
-            view: View ->
-            // TODO validate input
-            val text: String = findViewById<EditText>(R.id.route_length_input).text.toString()
-            routeDistanceMeters = text.toInt()
-            setGeneratedRoutesData(this.generated_routes_list)
-        }
+        setGeneratedRoutesData(this.generated_routes_list)
     }
 
     private fun generateRoutesData() {
@@ -125,7 +113,6 @@ class MapsActivity :
         mMap.moveCamera(CameraUpdateFactory.newLatLng(startingPoint))
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
         mMap.uiSettings.setZoomControlsEnabled(true)
-        setButton()
     }
 
     fun removeRouteAtIndex(index: Int) {

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/route_length_input"
+            android:layout_width="285dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:hint="enter route length in miles"
+            android:padding="5dp" />
+        <Button
+            android:id="@+id/route_length_input_submit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Go"/>
+    </LinearLayout>
+</android.support.constraint.ConstraintLayout>
