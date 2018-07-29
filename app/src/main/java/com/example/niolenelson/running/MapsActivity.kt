@@ -4,7 +4,6 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.text.Editable
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -81,31 +80,40 @@ class MapsActivity :
         val button = findViewById<Button>(R.id.route_length_input_submit)
         button.setOnClickListener {
             view: View ->
+            // TODO validate input
             val text: String = findViewById<EditText>(R.id.route_length_input).text.toString()
             routeDistanceMeters = text.toInt()
             setGeneratedRoutesData(this.generated_routes_list)
         }
     }
 
-    private fun setGeneratedRoutesData(generated_routes_list: RecyclerView) {
-        val activity = this
-        launch(UI) {
-            val point = javaStartingPoint
-            val bounds = getBounds(point)
-            val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
+    private fun generateRoutesData() {
+        val totalBoundFinds = Math.ceil(routeDistanceMeters.toDouble() / 2).toInt()
+        val point = javaStartingPoint
+        val bounds = getBounds(point)
+        val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
+
+        if (totalBoundFinds >= 1) {
             setPathDataInBounds(surroundingBounds)
+        }
+
+        for (i in 1..(totalBoundFinds - 1)) {
             setPathDataInBounds(
                     getSurroundingGridBounds(
                             JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude),
                             JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude)
                     )
             )
+        }
+    }
 
+    private fun setGeneratedRoutesData(generated_routes_list: RecyclerView) {
+        val activity = this
+        launch(UI) {
+            generateRoutesData()
             prunePathData()
-
             val routes: List<List<JavaLatLng>> = getCircles()
             generatedRoutes  = routes
-
             generated_routes_list.adapter = GeneratedRoutesAdapter(generatedRoutes as ArrayList<com.google.maps.model.LatLng>, activity)
         }
     }
