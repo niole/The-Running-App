@@ -4,6 +4,10 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.text.Editable
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.AngleGetter
 import com.example.niolenelson.running.utilities.Haversine
@@ -42,7 +46,7 @@ class MapsActivity :
 
     private val startingPoint = LatLng(37.86612570,-122.25051598)
 
-    private val routeDistanceMeters = 3
+    private var routeDistanceMeters = 0
 
     private val routeError = .5
 
@@ -73,6 +77,16 @@ class MapsActivity :
         this.generated_routes_list.layoutManager = linearLayoutManager
     }
 
+    private fun setButton() {
+        val button = findViewById<Button>(R.id.route_length_input_submit)
+        button.setOnClickListener {
+            view: View ->
+            val text: String = findViewById<EditText>(R.id.route_length_input).text.toString()
+            routeDistanceMeters = text.toInt()
+            setGeneratedRoutesData(this.generated_routes_list)
+        }
+    }
+
     private fun setGeneratedRoutesData(generated_routes_list: RecyclerView) {
         val activity = this
         launch(UI) {
@@ -99,11 +113,11 @@ class MapsActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-        setGeneratedRoutesData(this.generated_routes_list)
         mMap.addMarker(MarkerOptions().position(startingPoint).title("Home"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(startingPoint))
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
         mMap.uiSettings.setZoomControlsEnabled(true)
+        setButton()
     }
 
     fun removeRouteAtIndex(index: Int) {
