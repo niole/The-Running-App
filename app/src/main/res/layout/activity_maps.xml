@@ -21,7 +21,7 @@ tools:context="com.example.niolenelson.running.MapsActivity">
             android:id="@+id/generated_routes_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-        <Button
+        <com.example.niolenelson.running.utilities.SelectableButton
             android:id="@+id/get_directions_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

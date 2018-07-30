@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.AngleGetter
 import com.example.niolenelson.running.utilities.Haversine
+import com.example.niolenelson.running.utilities.SelectableButton
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -68,6 +69,7 @@ class MapsActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+        findViewById<SelectableButton>(R.id.get_directions_button).disable()
         routeDistanceMeters = intent.getIntExtra("routeDistanceMiles", 3)
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
@@ -133,7 +135,11 @@ class MapsActivity :
     }
 
     fun selectRouteAtIndex(index: Int) {
+        if (selectedRoute == -1) {
+            findViewById<SelectableButton>(R.id.get_directions_button).enable()
+        }
         selectedRoute = index
+
         val pathDataValues = generatedRoutes[index]
         val newLine = mMap.addPolyline(
                 PolylineOptions()

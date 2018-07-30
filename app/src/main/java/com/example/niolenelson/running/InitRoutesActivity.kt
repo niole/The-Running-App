@@ -5,10 +5,10 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
 import com.example.niolenelson.running.utilities.ValidatedEditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import com.example.niolenelson.running.utilities.SelectableButton
 import java.lang.Double.parseDouble
 
 /**
@@ -23,7 +23,7 @@ class InitRoutesActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val button = findViewById<Button>(R.id.route_length_input_submit)
+        val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
         val spinner = findViewById<ProgressBar>(R.id.loadingPanel)
         button.visibility = View.VISIBLE
         findViewById<LinearLayout>(R.id.init_routes_container ).removeView(spinner)
@@ -40,14 +40,14 @@ class InitRoutesActivity : AppCompatActivity() {
     }
 
     private fun setButton() {
-        val button = findViewById<Button>(R.id.route_length_input_submit)
+        val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
         val input = findViewById<ValidatedEditText>(R.id.route_length_input)
 
         input.validator(
                 { s -> validateMiles(s) },
                 "enter the number of miles for your route",
-                { button.isClickable = false },
-                { button.isClickable = true }
+                { button.disable() },
+                { button.enable() }
         )
 
         button.setOnClickListener {
@@ -64,7 +64,7 @@ class InitRoutesActivity : AppCompatActivity() {
         }
 
         if (!validateMiles(input.text.toString())) {
-            button.isClickable = false
+            button.disable()
         }
 
     }
