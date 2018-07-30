@@ -26,25 +26,11 @@ import kotlinx.coroutines.experimental.launch
 class MapsActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
-    private val COLOR_BLACK_ARGB = -0x1000000
-    private val COLOR_WHITE_ARGB = -0x1
-    private val COLOR_GREEN_ARGB = -0xc771c4
-    private val COLOR_PURPLE_ARGB = -0x7e387c
     private val COLOR_ORANGE_ARGB = -0xa80e9
-    private val COLOR_BLUE_ARGB = -0x657db
-
-    private val colors = listOf(
-        COLOR_BLACK_ARGB,
-        COLOR_WHITE_ARGB,
-        COLOR_GREEN_ARGB,
-        COLOR_PURPLE_ARGB,
-        COLOR_ORANGE_ARGB,
-        COLOR_BLUE_ARGB
-    )
 
     private val startingPoint = LatLng(37.86612570,-122.25051598)
 
-    private var routeDistanceMeters = 0
+    private var routeDistanceMiles: Double = 0.0
 
     private val routeError = .5
 
@@ -70,7 +56,7 @@ class MapsActivity :
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         findViewById<SelectableButton>(R.id.get_directions_button).disable()
-        routeDistanceMeters = intent.getIntExtra("routeDistanceMiles", 3)
+        routeDistanceMiles = intent.getDoubleExtra("routeDistanceMiles", 3.0)
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -87,7 +73,7 @@ class MapsActivity :
     }
 
     private fun generateRoutesData() {
-        val totalBoundFinds = Math.ceil(routeDistanceMeters.toDouble() / 2).toInt()
+        val totalBoundFinds = Math.ceil(routeDistanceMiles / 2).toInt()
         val point = javaStartingPoint
         val bounds = getBounds(point)
         val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
@@ -144,7 +130,7 @@ class MapsActivity :
         val newLine = mMap.addPolyline(
                 PolylineOptions()
                         .add(*pathDataValues.map{ LatLng(it.lat, it.lng) }.toTypedArray())
-                        .color(colors[index.rem(colors.size)])
+                        .color(COLOR_ORANGE_ARGB)
         )
 
       currentPolylines = currentPolylines.plus(Pair(index, newLine))
@@ -186,11 +172,11 @@ class MapsActivity :
     }
 
     private fun getDistanceBetweenCoordinates(lat1: Double, lat2: Double, lon1: Double, lon2: Double): Double {
-        return Haversine.distance(lat1, lon1, lat2, lon2, 'K')
+        return Haversine.distance(lat1, lon1, lat2, lon2, 'K') * 1.609
     }
 
     /**
-     * returns distance between coords in a path in meters
+     * returns distance between coords in a path in miles
      */
     private fun getPathDistance(path: List<JavaLatLng>): Double {
         var distance = 0.toDouble()
@@ -240,7 +226,7 @@ class MapsActivity :
         val angle = AngleGetter.getAngleFromNorthOnUnitCircle(pickedPoints.last())
         val totalAngle = (angle - angleSoFar) + angleSoFar
         if (totalAngle < Math.PI) {
-            if (remainingPoints.isNotEmpty() && distance < routeDistanceMeters) {
+            if (remainingPoints.isNotEmpty() && distance < routeDistanceMiles) {
                 return remainingPoints.mapIndexed { index: Int, it: JavaLatLng ->
                     val remainder = remainingPoints.drop(index + 1)
                     return buildCircles(
@@ -253,7 +239,7 @@ class MapsActivity :
                 }
             }
 
-            if (Math.abs(distance - routeDistanceMeters) < routeError) {
+            if (Math.abs(distance - routeDistanceMiles) < routeError) {
                 return listOf(pickedPoints.plus(javaStartingPoint))
             }
         }

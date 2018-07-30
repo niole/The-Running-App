@@ -57,9 +57,9 @@ class InitRoutesActivity : AppCompatActivity() {
             val spinner = inflater.inflate(R.layout.spinner, null, false)
             findViewById<LinearLayout>(R.id.init_routes_container ).addView(spinner)
             val text: String = input.text.toString()
-            val routeDistanceMeters = text.toInt()
+            val routeDistanceMiles = text.toDouble()
             val intent = Intent(this, MapsActivity::class.java)
-            intent.putExtra("routeDistanceMiles", routeDistanceMeters)
+            intent.putExtra("routeDistanceMiles", routeDistanceMiles)
             startActivity(intent)
         }
 

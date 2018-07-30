@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color.*
 import android.util.AttributeSet
 import android.widget.Button
+import com.example.niolenelson.running.R
 
 /**
  * Created by niolenelson on 7/29/18.
@@ -11,6 +12,7 @@ import android.widget.Button
 class SelectableButton : Button {
     init {
         enable()
+        setPadding(20, 0, 20, 0)
     }
     constructor(context: Context) : super(context)
 
@@ -20,14 +22,15 @@ class SelectableButton : Button {
 
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    fun disable(): Unit {
+    fun disable() {
         isClickable = false
-        setBackgroundColor(GRAY)
+        setTextColor(resources.getColor(R.color.colorAccent))
+        setBackgroundColor(WHITE)
     }
 
-    fun enable(): Unit {
+    fun enable() {
         isClickable = true
         setTextColor(WHITE)
-        setBackgroundColor(BLUE)
+        setBackgroundColor(resources.getColor(R.color.colorPrimary))
     }
 }
