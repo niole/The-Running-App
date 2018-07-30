@@ -32,7 +32,7 @@ class InitRoutesActivity : AppCompatActivity() {
     private fun validateMiles(s: String): Boolean {
         var numeric = true
         try {
-            val num = parseDouble(s)
+            parseDouble(s)
         } catch (e: NumberFormatException) {
             numeric = false
         }

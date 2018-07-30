@@ -16,6 +16,13 @@ import com.google.maps.model.LatLng as JavaLatLng
 class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private val context: MapsActivity) : RecyclerView.Adapter<ViewHolder>() {
     private var selectedPosition: Int = -1
 
+    fun getSelectedItem(): JavaLatLng? {
+       if (selectedPosition > -1) {
+           return items[selectedPosition]
+       }
+       return null
+    }
+
     // Gets the number of animals in the list
     override fun getItemCount(): Int {
         return items.size
@@ -61,7 +68,7 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
             }
             selectedPosition = position
             setSelectedStyle(holder?.tvGeneratedRoutesType!!)
-            context.drawRouteAtIndex(position)
+            context.selectRouteAtIndex(position)
         }
     }
 }

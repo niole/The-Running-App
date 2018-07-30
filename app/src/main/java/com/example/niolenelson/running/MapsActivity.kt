@@ -4,10 +4,8 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import com.example.niolenelson.running.utilities.AngleGetter
 import com.example.niolenelson.running.utilities.Haversine
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -65,6 +63,8 @@ class MapsActivity :
 
     private var currentPolylines: Map<Int, Polyline> = mapOf()
 
+    private var selectedRoute = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -76,6 +76,12 @@ class MapsActivity :
         linearLayoutManager.orientation = LinearLayout.HORIZONTAL
         this.generated_routes_list.layoutManager = linearLayoutManager
         setGeneratedRoutesData(this.generated_routes_list)
+        val getDirectionsButton = findViewById<Button>(R.id.get_directions_button)
+        getDirectionsButton.setOnClickListener {
+            if (selectedRoute > -1) {
+                println("selected $selectedRoute")
+            }
+        }
     }
 
     private fun generateRoutesData() {
@@ -126,7 +132,8 @@ class MapsActivity :
         }
     }
 
-    fun drawRouteAtIndex(index: Int) {
+    fun selectRouteAtIndex(index: Int) {
+        selectedRoute = index
         val pathDataValues = generatedRoutes[index]
         val newLine = mMap.addPolyline(
                 PolylineOptions()
@@ -316,7 +323,8 @@ class MapsActivity :
     }
 
     private fun getPointsInBounds(northeast: JavaLatLng, southwest: JavaLatLng): Array<SnappedPoint> {
-        return RoadsApi.snapToRoads(geoContext, true, northeast, southwest).await()
+        val points = RoadsApi.snapToRoads(geoContext, true, northeast, southwest).await()
+        return points ?: arrayOf()
     }
 
 }
