@@ -6,9 +6,10 @@ import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
+import com.example.niolenelson.running.utilities.ValidatedEditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import java.lang.Double.parseDouble
 
 /**
  * Created by niolenelson on 7/29/18.
@@ -28,22 +29,44 @@ class InitRoutesActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.init_routes_container ).removeView(spinner)
     }
 
+    private fun validateMiles(s: String): Boolean {
+        var numeric = true
+        try {
+            val num = parseDouble(s)
+        } catch (e: NumberFormatException) {
+            numeric = false
+        }
+        return numeric
+    }
 
     private fun setButton() {
         val button = findViewById<Button>(R.id.route_length_input_submit)
+        val input = findViewById<ValidatedEditText>(R.id.route_length_input)
+
+        input.validator(
+                { s -> validateMiles(s) },
+                "enter the number of miles for your route",
+                { button.isClickable = false },
+                { button.isClickable = true }
+        )
+
         button.setOnClickListener {
             view: View ->
-            // TODO validate input
             button.visibility = View.GONE
             val inflater = LayoutInflater.from(this)
             val spinner = inflater.inflate(R.layout.spinner, null, false)
             findViewById<LinearLayout>(R.id.init_routes_container ).addView(spinner)
-            val text: String = findViewById<EditText>(R.id.route_length_input).text.toString()
+            val text: String = input.text.toString()
             val routeDistanceMeters = text.toInt()
             val intent = Intent(this, MapsActivity::class.java)
             intent.putExtra("routeDistanceMiles", routeDistanceMeters)
             startActivity(intent)
         }
+
+        if (!validateMiles(input.text.toString())) {
+            button.isClickable = false
+        }
+
     }
 
 }

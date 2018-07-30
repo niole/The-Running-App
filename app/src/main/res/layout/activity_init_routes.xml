@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -9,7 +10,7 @@
         android:layout_height="match_parent"
         android:orientation="horizontal">
 
-        <EditText
+        <com.example.niolenelson.running.utilities.ValidatedEditText
             android:id="@+id/route_length_input"
             android:layout_width="285dp"
             android:layout_height="wrap_content"
