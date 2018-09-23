@@ -3,12 +3,10 @@ package com.example.niolenelson.running
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.view.LayoutInflater
 import android.view.View
 import com.example.niolenelson.running.utilities.ValidatedEditText
-import android.widget.LinearLayout
-import android.widget.ProgressBar
 import com.example.niolenelson.running.utilities.SelectableButton
+import com.example.niolenelson.running.utilities.UIUtilities
 import java.lang.Double.parseDouble
 
 /**
@@ -24,9 +22,8 @@ class InitRoutesActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
-        val spinner = findViewById<ProgressBar>(R.id.loadingPanel)
         button.visibility = View.VISIBLE
-        findViewById<LinearLayout>(R.id.init_routes_container ).removeView(spinner)
+        UIUtilities.Spinner.remove(this, R.id.init_routes_container)
     }
 
     private fun validateMiles(s: String): Boolean {
@@ -53,9 +50,9 @@ class InitRoutesActivity : AppCompatActivity() {
         button.setOnClickListener {
             view: View ->
             button.visibility = View.GONE
-            val inflater = LayoutInflater.from(this)
-            val spinner = inflater.inflate(R.layout.spinner, null, false)
-            findViewById<LinearLayout>(R.id.init_routes_container ).addView(spinner)
+
+            UIUtilities.Spinner.add(this, R.id.init_routes_container)
+
             val text: String = input.text.toString()
             val routeDistanceMiles = text.toDouble()
             val intent = Intent(this, MapsActivity::class.java)

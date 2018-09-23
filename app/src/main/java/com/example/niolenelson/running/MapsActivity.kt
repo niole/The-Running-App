@@ -1,15 +1,13 @@
 package com.example.niolenelson.running
 
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.widget.Button
 import android.widget.LinearLayout
-import com.example.niolenelson.running.utilities.AngleGetter
-import com.example.niolenelson.running.utilities.Haversine
-import com.example.niolenelson.running.utilities.LocalDirectionApi
-import com.example.niolenelson.running.utilities.SelectableButton
+import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -19,17 +17,15 @@ import com.google.maps.*
 import com.google.maps.model.Bounds
 import com.google.maps.model.SnappedPoint
 import com.google.maps.model.LatLng as JavaLatLng
-import com.google.android.gms.maps.model.PolylineOptions
 import com.google.maps.DirectionsApi.newRequest
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
+import java.io.Serializable
 
 class MapsActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
-    private val COLOR_ORANGE_ARGB = -0xa80e9
-
     private val startingPoint = LatLng(37.86612570,-122.25051598)
 
     private var routeDistanceMiles: Double = 0.0
@@ -52,9 +48,12 @@ class MapsActivity :
 
     private var currentPolylines: Map<Int, Polyline> = mapOf()
 
-    private var currentDirections: Map<Int, Polyline> = mapOf()
-
     private var selectedRoute = -1
+
+    override fun onResume() {
+        super.onResume()
+        UIUtilities.Spinner.remove(this, R.id.maps_activity_container)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,18 +66,21 @@ class MapsActivity :
         val linearLayoutManager = LinearLayoutManager(this)
         linearLayoutManager.orientation = LinearLayout.HORIZONTAL
         this.generated_routes_list.layoutManager = linearLayoutManager
+
         setGeneratedRoutesData(this.generated_routes_list)
         val getDirectionsButton = findViewById<Button>(R.id.get_directions_button)
         getDirectionsButton.setOnClickListener {
             if (selectedRoute > -1) {
-                println("selected $selectedRoute")
-                val selectedRoutePoints = generatedRoutes[selectedRoute]
-                val result = newRequest(geoContext).origin(javaStartingPoint).destination(javaStartingPoint).waypoints(*selectedRoutePoints.toTypedArray()).optimizeWaypoints(true).await()
-                val directions = LocalDirectionApi.getDirections(result)
+                val result = newRequest(geoContext).origin(javaStartingPoint).destination(javaStartingPoint).waypoints(*generatedRoutes[selectedRoute].toTypedArray()).optimizeWaypoints(true).await()
 
-                setRouteDirections(selectedRoute, directions)
+                UIUtilities.Spinner.add(this, R.id.maps_activity_container)
 
-                println(directions)
+                val intent = Intent(this, RouteActivity::class.java)
+
+                intent.putExtra("startingPoint", javaStartingPoint as Serializable)
+                intent.putExtra("directionsResult", result as Serializable)
+
+                startActivity(intent)
 
             }
         }
@@ -130,13 +132,6 @@ class MapsActivity :
             line.remove()
             currentPolylines = currentPolylines.minus(index)
         }
-
-        val directions = currentDirections.get(index)
-        if (directions != null) {
-            directions.remove()
-            currentDirections = currentDirections.minus(index)
-        }
-
     }
 
     fun selectRouteAtIndex(index: Int) {
@@ -146,23 +141,9 @@ class MapsActivity :
         selectedRoute = index
 
         val pathDataValues = generatedRoutes[index]
-        val newLine = mMap.addPolyline(makePolyline(pathDataValues))
+        val newLine = mMap.addPolyline(RouteUtilities.makePolyline(pathDataValues))
 
         currentPolylines = currentPolylines.plus(Pair(index, newLine))
-    }
-
-    private fun makePolyline(points: List<JavaLatLng>): PolylineOptions {
-        return PolylineOptions()
-                .add(*points.map{ LatLng(it.lat, it.lng) }.toTypedArray())
-                .color(COLOR_ORANGE_ARGB)
-    }
-
-    fun setRouteDirections(index: Int, directions: List<LocalDirectionApi.Direction>) {
-        removeRouteAtIndex(index)
-        val newLinePoints = directions.flatMap { direction -> direction.polyline.decodePath() }
-        val newLine = makePolyline(newLinePoints)
-        val addedPolyline = mMap.addPolyline(newLine)
-        currentDirections = currentDirections.plus(Pair(index, addedPolyline))
     }
 
     private fun prunePathData() {
