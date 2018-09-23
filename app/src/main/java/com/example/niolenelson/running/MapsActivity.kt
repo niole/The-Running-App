@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.AngleGetter
 import com.example.niolenelson.running.utilities.Haversine
+import com.example.niolenelson.running.utilities.LocalDirectionApi
 import com.example.niolenelson.running.utilities.SelectableButton
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -19,6 +20,7 @@ import com.google.maps.model.Bounds
 import com.google.maps.model.SnappedPoint
 import com.google.maps.model.LatLng as JavaLatLng
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.maps.DirectionsApi.newRequest
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
@@ -50,6 +52,8 @@ class MapsActivity :
 
     private var currentPolylines: Map<Int, Polyline> = mapOf()
 
+    private var currentDirections: Map<Int, Polyline> = mapOf()
+
     private var selectedRoute = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +72,14 @@ class MapsActivity :
         getDirectionsButton.setOnClickListener {
             if (selectedRoute > -1) {
                 println("selected $selectedRoute")
+                val selectedRoutePoints = generatedRoutes[selectedRoute]
+                val result = newRequest(geoContext).origin(javaStartingPoint).destination(javaStartingPoint).waypoints(*selectedRoutePoints.toTypedArray()).optimizeWaypoints(true).await()
+                val directions = LocalDirectionApi.getDirections(result)
+
+                setRouteDirections(selectedRoute, directions)
+
+                println(directions)
+
             }
         }
     }
@@ -118,6 +130,13 @@ class MapsActivity :
             line.remove()
             currentPolylines = currentPolylines.minus(index)
         }
+
+        val directions = currentDirections.get(index)
+        if (directions != null) {
+            directions.remove()
+            currentDirections = currentDirections.minus(index)
+        }
+
     }
 
     fun selectRouteAtIndex(index: Int) {
@@ -127,13 +146,23 @@ class MapsActivity :
         selectedRoute = index
 
         val pathDataValues = generatedRoutes[index]
-        val newLine = mMap.addPolyline(
-                PolylineOptions()
-                        .add(*pathDataValues.map{ LatLng(it.lat, it.lng) }.toTypedArray())
-                        .color(COLOR_ORANGE_ARGB)
-        )
+        val newLine = mMap.addPolyline(makePolyline(pathDataValues))
 
-      currentPolylines = currentPolylines.plus(Pair(index, newLine))
+        currentPolylines = currentPolylines.plus(Pair(index, newLine))
+    }
+
+    private fun makePolyline(points: List<JavaLatLng>): PolylineOptions {
+        return PolylineOptions()
+                .add(*points.map{ LatLng(it.lat, it.lng) }.toTypedArray())
+                .color(COLOR_ORANGE_ARGB)
+    }
+
+    fun setRouteDirections(index: Int, directions: List<LocalDirectionApi.Direction>) {
+        removeRouteAtIndex(index)
+        val newLinePoints = directions.flatMap { direction -> direction.polyline.decodePath() }
+        val newLine = makePolyline(newLinePoints)
+        val addedPolyline = mMap.addPolyline(newLine)
+        currentDirections = currentDirections.plus(Pair(index, addedPolyline))
     }
 
     private fun prunePathData() {
