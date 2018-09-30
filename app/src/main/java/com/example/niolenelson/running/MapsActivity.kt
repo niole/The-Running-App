@@ -30,9 +30,9 @@ class MapsActivity :
 
     private var routeDistanceMiles: Double = 0.0
 
-    private val routeError = .5
+    private val routeError = .25
 
-    private val uniquePointDistanceKm = .5
+    private val uniquePointDistanceMiles = .5
 
     private val javaStartingPoint = JavaLatLng(startingPoint.latitude, startingPoint.longitude)
 
@@ -155,7 +155,7 @@ class MapsActivity :
                         it.location.lat,
                         seenPoint.location.lng,
                         it.location.lng
-                ) <= uniquePointDistanceKm
+                ) <= uniquePointDistanceMiles
             }
             if (closePoint != null) {
                 false
@@ -182,7 +182,7 @@ class MapsActivity :
     }
 
     private fun getDistanceBetweenCoordinates(lat1: Double, lat2: Double, lon1: Double, lon2: Double): Double {
-        return Haversine.distance(lat1, lon1, lat2, lon2, 'K') * 1.609
+        return Haversine.distanceMiles(lat1, lon1, lat2, lon2)
     }
 
     /**
@@ -249,7 +249,8 @@ class MapsActivity :
                 }
             }
 
-            if (Math.abs(distance - routeDistanceMiles) < routeError) {
+            val finalDistance = distance + getPathDistance(listOf(pickedPoints.last(), javaStartingPoint))
+            if (Math.abs(finalDistance - routeDistanceMiles) < routeError) {
                 return listOf(pickedPoints.plus(javaStartingPoint))
             }
         }

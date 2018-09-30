@@ -18,6 +18,14 @@ object Haversine {
         return dist
     }
 
+    fun distanceMiles(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        return distance(lat1, lon1, lat2, lon2, 'K') / 1.609
+    }
+
+    fun metersToMiles(meters: Double): Double {
+        return meters / 1609
+    }
+
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
     /*::  This function converts decimal degrees to radians             :*/
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/

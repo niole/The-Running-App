@@ -19,6 +19,7 @@ import com.google.android.gms.location.LocationCallback
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.support.v4.content.ContextCompat
+import com.example.niolenelson.running.utilities.Haversine.metersToMiles
 
 
 /**
@@ -62,6 +63,11 @@ class RouteActivity :
         startingPoint = intent.extras.get("startingPoint") as LatLng
         val directionsResult = intent.extras.get("directionsResult") as DirectionsResult
         directions = LocalDirectionApi.getDirections(directionsResult)
+
+        println("ROUTE DISTANCE                   kjkkjk  kj")
+        println(directions.fold(0.toDouble()) {
+           distance, nextDirection -> distance + metersToMiles(nextDirection.distanceMeters.toDouble())
+        })
 
         fusedLocationClient = getFusedLocationProviderClient(this)
 
