@@ -90,8 +90,6 @@ class InitRoutesActivity :
 
             val routeStartAddress = route_start_input.text
 
-            println(routeStartAddress)
-
             val res = PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).await()
 
             if (res.size > 0) {

@@ -36,7 +36,7 @@
 
         <activity
             android:name=".InitRoutesActivity"
-            android:label="@string/title_activity_maps">
+            android:label="Where do you want to go?">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -47,7 +47,7 @@
             android:name=".MapsActivity"
             android:label="Pick a Route">
         </activity>
-        <activity android:name=".RouteActivity">
+        <activity android:name=".RouteActivity" android:label="Go!">
         </activity>
     </application>
 </manifest>
