@@ -8,16 +8,38 @@ import com.example.niolenelson.running.utilities.ValidatedEditText
 import com.example.niolenelson.running.utilities.SelectableButton
 import com.example.niolenelson.running.utilities.UIUtilities
 import com.example.niolenelson.running.utilities.ValidatedForm
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.maps.GeoApiContext
+import com.google.maps.PlacesApi
 import java.lang.Double.parseDouble
 
 /**
  * Created by niolenelson on 7/29/18.
  */
-class InitRoutesActivity : AppCompatActivity() {
+class InitRoutesActivity :
+        AppCompatActivity(),
+        OnMapReadyCallback {
+
+    private lateinit var mMap: GoogleMap
+
+    private lateinit var geoContext: GeoApiContext
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
+
+        setForm()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_init_routes)
-        setForm()
+
+        val mapFragment = supportFragmentManager
+                .findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
     }
 
     override fun onResume() {
@@ -70,11 +92,26 @@ class InitRoutesActivity : AppCompatActivity() {
 
             println(routeStartAddress)
 
-            // TODO get lat lng of start address
-            // TODO validate address
-            // TODO center inputs in init routes view
-            intent.putExtra("starting_lat", 37.872983)
-            intent.putExtra("starting_lng", -122.255754)
+            val res = PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).await()
+
+            if (res.size > 0) {
+                // TODO do this as a dropdown with autocomplete
+                // make this async
+                val place = res[0]
+                val details = PlacesApi.placeDetails(geoContext, place.placeId).await()
+                val lat = details.geometry.location.lat
+                val lng = details.geometry.location.lng
+
+                // TODO get lat lng of start address
+                // TODO validate address
+                // TODO center inputs in init routes view
+                intent.putExtra("starting_lat", lat)
+                intent.putExtra("starting_lng", lng)
+
+            } else {
+                intent.putExtra("starting_lat", 37.872983)
+                intent.putExtra("starting_lng", -122.255754)
+            }
 
             startActivity(intent)
         }

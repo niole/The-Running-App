@@ -26,7 +26,7 @@ import java.io.Serializable
 class MapsActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
-    private lateinit var startingPoint: LatLng // = LatLng(37.86612570,-122.25051598)
+    private lateinit var startingPoint: LatLng
 
     private var routeDistanceMiles: Double = 0.0
 
@@ -34,7 +34,7 @@ class MapsActivity :
 
     private val uniquePointDistanceMiles = .5
 
-    private lateinit var javaStartingPoint: JavaLatLng // JavaLatLng(startingPoint.latitude, startingPoint.longitude)
+    private lateinit var javaStartingPoint: JavaLatLng
 
     private lateinit var mMap: GoogleMap
 
@@ -59,7 +59,6 @@ class MapsActivity :
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         findViewById<SelectableButton>(R.id.get_directions_button).disable()
-
 
         routeDistanceMiles = intent.getDoubleExtra("routeDistanceMiles", 3.0)
         val mapFragment = supportFragmentManager
