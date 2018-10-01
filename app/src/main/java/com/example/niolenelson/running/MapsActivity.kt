@@ -26,7 +26,7 @@ import java.io.Serializable
 class MapsActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
-    private val startingPoint = LatLng(37.86612570,-122.25051598)
+    private lateinit var startingPoint: LatLng // = LatLng(37.86612570,-122.25051598)
 
     private var routeDistanceMiles: Double = 0.0
 
@@ -34,7 +34,7 @@ class MapsActivity :
 
     private val uniquePointDistanceMiles = .5
 
-    private val javaStartingPoint = JavaLatLng(startingPoint.latitude, startingPoint.longitude)
+    private lateinit var javaStartingPoint: JavaLatLng // JavaLatLng(startingPoint.latitude, startingPoint.longitude)
 
     private lateinit var mMap: GoogleMap
 
@@ -59,6 +59,8 @@ class MapsActivity :
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         findViewById<SelectableButton>(R.id.get_directions_button).disable()
+
+
         routeDistanceMiles = intent.getDoubleExtra("routeDistanceMiles", 3.0)
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
@@ -66,6 +68,8 @@ class MapsActivity :
         val linearLayoutManager = LinearLayoutManager(this)
         linearLayoutManager.orientation = LinearLayout.HORIZONTAL
         this.generated_routes_list.layoutManager = linearLayoutManager
+
+        setStartingPoint(intent)
 
         setGeneratedRoutesData(this.generated_routes_list)
         val getDirectionsButton = findViewById<Button>(R.id.get_directions_button)
@@ -86,8 +90,22 @@ class MapsActivity :
         }
     }
 
+    private fun setStartingPoint(intent: Intent) {
+        val lat: Double = intent.getDoubleExtra("starting_lat", 0.toDouble())
+        val lng: Double = intent.getDoubleExtra("starting_lng", 0.toDouble())
+        startingPoint = LatLng(lat, lng)
+        javaStartingPoint =JavaLatLng(lat, lng)
+    }
+
     private fun generateRoutesData() {
+        // TODO i think there is some duplicated work in this function
+        // TODO need to better pick patches where we get points from
+        // clustered and intersecting roads are pretty safe to get a bunch of random points
+        // from
+        // when roads tightly coupled tho, how do we pick area where we get data better
+        // how do we know where a reasonable cluster of roads are?
         val totalBoundFinds = Math.ceil(routeDistanceMiles / 2).toInt()
+
         val point = javaStartingPoint
         val bounds = getBounds(point)
         val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
@@ -168,6 +186,9 @@ class MapsActivity :
        pathData = prunedMap
     }
 
+    /**
+     * gets points on roads in bounded patches described in the arguments
+     */
     private fun setPathDataInBounds(surroundingBounds: Array<LatLngBounds>) {
         val markerAddresses: Array<SnappedPoint> = (surroundingBounds.flatMap {
             getPointsInBounds(
@@ -320,13 +341,17 @@ class MapsActivity :
         )
     }
 
+    /**
+     * get view points bounds as lat lng points
+     */
     private fun getBounds(latLng: JavaLatLng): Bounds {
         val address = GeocodingApi.reverseGeocode(geoContext, latLng).await()
         return address[0].geometry.viewport
     }
 
     private fun getPointsInBounds(northeast: JavaLatLng, southwest: JavaLatLng): Array<SnappedPoint> {
-        val points = RoadsApi.snapToRoads(geoContext, true, northeast, southwest).await()
+        // val points = RoadsApi.snapToRoads(geoContext, true, northeast, southwest).await()
+        val points = RoadsApi.nearestRoads(geoContext, northeast, southwest).await()
         return points ?: arrayOf()
     }
 

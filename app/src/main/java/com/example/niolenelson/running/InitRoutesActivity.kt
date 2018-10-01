@@ -7,6 +7,7 @@ import android.view.View
 import com.example.niolenelson.running.utilities.ValidatedEditText
 import com.example.niolenelson.running.utilities.SelectableButton
 import com.example.niolenelson.running.utilities.UIUtilities
+import com.example.niolenelson.running.utilities.ValidatedForm
 import java.lang.Double.parseDouble
 
 /**
@@ -16,7 +17,7 @@ class InitRoutesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_init_routes)
-        setButton()
+        setForm()
     }
 
     override fun onResume() {
@@ -36,34 +37,47 @@ class InitRoutesActivity : AppCompatActivity() {
         return numeric
     }
 
-    private fun setButton() {
+    private fun setForm() {
         val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
-        val input = findViewById<ValidatedEditText>(R.id.route_length_input)
+        val input_route_length = findViewById<ValidatedEditText>(R.id.route_length_input)
+        val route_start_input = findViewById<ValidatedEditText>(R.id.route_start_input)
 
-        input.validator(
-                { s -> validateMiles(s) },
-                "enter the number of miles for your route",
-                { button.disable() },
-                { button.enable() }
-        )
+        val form = findViewById<ValidatedForm>(R.id.init_routes_container)
+        form.setInputs(button,
+                    Triple(
+                            input_route_length,
+                            "enter the number of miles for your route",
+                            { s -> validateMiles(s) }
+                    ),
+                    Triple(
+                        route_start_input,
+            "where do you want to start?",
+                        { s -> s.trim() != "" }
+                    )
+            )
 
-        button.setOnClickListener {
-            view: View ->
+        form.addOnSubmitListener {
+            val intent = Intent(this, MapsActivity::class.java)
+
             button.visibility = View.GONE
-
             UIUtilities.Spinner.add(this, R.id.init_routes_container)
 
-            val text: String = input.text.toString()
-            val routeDistanceMiles = text.toDouble()
-            val intent = Intent(this, MapsActivity::class.java)
+            val routeLengthText: String = input_route_length.text.toString()
+            val routeDistanceMiles = routeLengthText.toDouble()
             intent.putExtra("routeDistanceMiles", routeDistanceMiles)
+
+            val routeStartAddress = route_start_input.text
+
+            println(routeStartAddress)
+
+            // TODO get lat lng of start address
+            // TODO validate address
+            // TODO center inputs in init routes view
+            intent.putExtra("starting_lat", 37.872983)
+            intent.putExtra("starting_lng", -122.255754)
+
             startActivity(intent)
         }
-
-        if (!validateMiles(input.text.toString())) {
-            button.disable()
-        }
-
     }
 
 }

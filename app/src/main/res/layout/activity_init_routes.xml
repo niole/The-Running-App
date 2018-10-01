@@ -3,13 +3,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <LinearLayout
+    <com.example.niolenelson.running.utilities.ValidatedForm
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/init_routes_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
+        <com.example.niolenelson.running.utilities.ValidatedEditText
+            android:id="@+id/route_start_input"
+            android:layout_width="285dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:hint="enter a starting point"
+            android:padding="5dp" />
         <com.example.niolenelson.running.utilities.ValidatedEditText
             android:id="@+id/route_length_input"
             android:layout_width="285dp"
@@ -22,5 +29,5 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Go"/>
-    </LinearLayout>
+    </com.example.niolenelson.running.utilities.ValidatedForm>
 </android.support.constraint.ConstraintLayout>
