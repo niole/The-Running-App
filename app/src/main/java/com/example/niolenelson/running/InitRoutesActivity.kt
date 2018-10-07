@@ -15,6 +15,7 @@ import com.google.maps.GeoApiContext
 import com.google.maps.PlacesApi
 import java.lang.Double.parseDouble
 
+
 /**
  * Created by niolenelson on 7/29/18.
  */

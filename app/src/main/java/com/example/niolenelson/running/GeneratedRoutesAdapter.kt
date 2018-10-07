@@ -29,7 +29,7 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
     }
 
     // Inflates the item views
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(
                 LayoutInflater.from(context).inflate(R.layout.route_item, parent, false)
         )
@@ -46,7 +46,7 @@ class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private 
     }
 
     // Binds each animal in the ArrayList to a view
-    override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         if (holder != null && holder.itemView != null) {
             if (position == selectedPosition) {
                 setSelectedStyle(holder.tvGeneratedRoutesType!!)
