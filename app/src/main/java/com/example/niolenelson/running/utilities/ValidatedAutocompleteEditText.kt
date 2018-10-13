@@ -4,14 +4,12 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
-import android.widget.EditText
+import android.widget.AutoCompleteTextView
 
 /**
- * validated edit text input
- * Created by niolenelson on 7/29/18.
+ * Created by niolenelson on 10/7/18.
  */
-
-class ValidatedEditText : EditText, ValidatedInput {
+class ValidatedAutocompleteEditText : AutoCompleteTextView, ValidatedInput {
 
     constructor(context: Context): super(context)
 
@@ -40,3 +38,4 @@ class ValidatedEditText : EditText, ValidatedInput {
         })
     }
 }
+

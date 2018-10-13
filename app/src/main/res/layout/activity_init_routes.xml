@@ -16,8 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
-        <com.example.niolenelson.running.utilities.ValidatedEditText
+        <com.example.niolenelson.running.utilities.ValidatedAutocompleteEditText
             android:id="@+id/route_start_input"
             android:layout_width="285dp"
             android:layout_height="wrap_content"

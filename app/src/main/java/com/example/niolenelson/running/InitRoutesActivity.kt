@@ -4,10 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import com.example.niolenelson.running.utilities.ValidatedEditText
-import com.example.niolenelson.running.utilities.SelectableButton
-import com.example.niolenelson.running.utilities.UIUtilities
-import com.example.niolenelson.running.utilities.ValidatedForm
+import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -63,7 +60,7 @@ class InitRoutesActivity :
     private fun setForm() {
         val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
         val input_route_length = findViewById<ValidatedEditText>(R.id.route_length_input)
-        val route_start_input = findViewById<ValidatedEditText>(R.id.route_start_input)
+        val route_start_input = findViewById<ValidatedAutocompleteEditText>(R.id.route_start_input)
 
         val form = findViewById<ValidatedForm>(R.id.init_routes_container)
         form.setInputs(button,

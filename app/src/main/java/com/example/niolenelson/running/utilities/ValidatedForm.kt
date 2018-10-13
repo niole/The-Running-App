@@ -33,7 +33,7 @@ class ValidatedForm : LinearLayout {
         onSubmitHandler = onSubmit
     }
 
-    fun setInputs(userSubmitButton: SelectableButton, vararg inputs: Triple<ValidatedEditText, String, (String) -> Boolean>) {
+    fun setInputs(userSubmitButton: SelectableButton, vararg inputs: Triple<ValidatedInput, String, (String) -> Boolean>) {
         submitButton = userSubmitButton
 
         submitButton.setOnClickListener {
@@ -51,7 +51,7 @@ class ValidatedForm : LinearLayout {
                     validator,
                     errorMessage,
                     {
-                        val isValid = validationMap[input.id as Integer]
+                        val isValid = validationMap[input.getId() as Integer]
                         if (isValid != null) {
                             if (isValid) {
                                 // if it was valid, it is now invalid
@@ -59,11 +59,11 @@ class ValidatedForm : LinearLayout {
                             }
                         }
                         // set it
-                        validationMap = validationMap.plus(Pair(input.id as Integer, false))
+                        validationMap = validationMap.plus(Pair(input.getId() as Integer, false))
                         disableButton()
                 },
                 {
-                    val isValid: Boolean? = validationMap[input.id as Integer]
+                    val isValid: Boolean? = validationMap[input.getId() as Integer]
                     if (isValid != null) {
                         if (!isValid) {
                             // if it was invalid, it is now valid
@@ -74,7 +74,7 @@ class ValidatedForm : LinearLayout {
                         totalValidInputs += 1
                     }
                     // set it
-                    validationMap = validationMap.plus(Pair(input.id as Integer, true))
+                    validationMap = validationMap.plus(Pair(input.getId() as Integer, true))
 
                     tryToEnableButton()
                 }
