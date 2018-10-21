@@ -21,6 +21,8 @@ class ValidatedAutocompleteEditText<T> : AutoCompleteTextView, ValidatedInput {
 
     var suggestions: MutableList<T> = mutableListOf()
 
+    var suggestionsSet: MutableMap<String, T> = mutableMapOf()
+
     lateinit var typeaheadAdapter: ArrayAdapter<T>
 
     constructor(context: Context): super(context)
@@ -46,11 +48,17 @@ class ValidatedAutocompleteEditText<T> : AutoCompleteTextView, ValidatedInput {
 
     }
 
+    private fun addNewSuggestions(newSuggestions: ArrayList<T>) {
+        val nonRepeatedSuggestions = newSuggestions.filter { suggestionsSet.get(it.toString()) == null }
+        nonRepeatedSuggestions.forEach {
+            suggestionsSet.put(it.toString(), it)
+        }
+        suggestions.addAll(nonRepeatedSuggestions)
+        typeaheadAdapter.addAll(nonRepeatedSuggestions)
+    }
+
     fun updateSuggestions(newSuggestions: ArrayList<T>) {
-        suggestions.clear()
-        suggestions.addAll(newSuggestions)
-        typeaheadAdapter.clear()
-        typeaheadAdapter.addAll(suggestions)
+        addNewSuggestions(newSuggestions)
         typeaheadAdapter.notifyDataSetChanged()
     }
 
