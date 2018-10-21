@@ -13,6 +13,8 @@ import com.google.maps.PlacesApi
 import java.lang.Double.parseDouble
 import android.view.KeyEvent
 import android.widget.Toast
+import com.google.maps.PendingResult
+import com.google.maps.model.AutocompletePrediction
 import java.util.*
 
 /**
@@ -22,11 +24,30 @@ class InitRoutesActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
 
+    private val autocompleteCallback: APICallback<Array<AutocompletePrediction>> = APICallback()
+
     private lateinit var routeStartInput: ValidatedAutocompleteEditText<AutoCompleteViewDTO>
 
     private lateinit var mMap: GoogleMap
 
     private lateinit var geoContext: GeoApiContext
+
+
+    init {
+        autocompleteCallback.addOnResult {
+            predictions: Array<AutocompletePrediction> ->
+            if (predictions.isNotEmpty()) {
+                routeStartInput.updateSuggestions(predictions.map { AutoCompleteViewDTO(it) } as ArrayList<AutoCompleteViewDTO>)
+            } else {
+                println("no predictions")
+            }
+        }
+
+        autocompleteCallback.addOnFailure {
+            error: Throwable? ->
+            println(error)
+        }
+    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -38,12 +59,7 @@ class InitRoutesActivity :
         routeStartInput.setDebouncedOnKeyListener(1000, this, {
          keyCode: Int, event: KeyEvent ->
             val routeStartAddress = routeStartInput.text
-            val predictions = PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).await()
-            if (predictions != null) {
-                routeStartInput.updateSuggestions(predictions.map { AutoCompleteViewDTO(it) } as ArrayList<AutoCompleteViewDTO>)
-            } else {
-                println("no predictions")
-            }
+            PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).setCallback(autocompleteCallback)
         })
 
         setForm()
