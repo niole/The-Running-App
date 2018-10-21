@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import android.widget.ArrayAdapter
 import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -15,6 +14,7 @@ import java.lang.Double.parseDouble
 import com.google.maps.model.AutocompletePrediction
 import android.app.Activity
 import android.view.KeyEvent
+import android.widget.Toast
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -131,8 +131,7 @@ class InitRoutesActivity :
             intent.putExtra("routeDistanceMiles", routeDistanceMiles)
 
             val routeStartAddress = routeStartInput.text
-            val selectedItem = routeStartInput.selectedItem as AutoCompleteViewDTO
-            if (selectedItem == null) {
+            if (routeStartInput.selectedItem == null) {
                 // just go with route start address
                 val predictions = PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).await()
                 if (predictions != null && predictions.isNotEmpty()) {
@@ -145,12 +144,18 @@ class InitRoutesActivity :
                     intent.putExtra("starting_lng", lng)
                     startActivity(intent)
                 } else {
-                    // TODO you're screwed
-                    println("You're screwed")
+                    // user entered a nonsensical place
+                    // stop spinner
+                    button.visibility = View.VISIBLE
+                    UIUtilities.Spinner.remove(this, R.id.init_routes_container)
+
+                    // restart flow
+                    Toast.makeText(this, "$routeStartAddress has no associated address. Enter a new starting point", Toast.LENGTH_LONG)
                 }
 
             } else {
                 // have selected item use that
+                val selectedItem = routeStartInput.selectedItem as AutoCompleteViewDTO
                 val suggestion = PlacesApi.placeDetails(geoContext, selectedItem.prediction.placeId).await()
                 intent.putExtra("starting_lat", suggestion.geometry.location.lat)
                 intent.putExtra("starting_lng", suggestion.geometry.location.lng)
