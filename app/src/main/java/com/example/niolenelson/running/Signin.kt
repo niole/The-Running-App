@@ -9,6 +9,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.tasks.Task
 import android.content.Intent
+import android.widget.Toast
+import com.example.niolenelson.running.utilities.LocationPermissionHandler
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 
@@ -54,8 +56,10 @@ class SigninActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun onSignInSuccess(account: GoogleSignInAccount) {
-        val intent = Intent(this, InitRoutesActivity::class.java)
-        startActivity(intent)
+        LocationPermissionHandler.getLocationPermission(this, {
+            val intent = Intent(this, InitRoutesActivity::class.java)
+            startActivity(intent)
+        })
     }
 
     override fun onClick(view: View) {
@@ -90,9 +94,12 @@ class SigninActivity : AppCompatActivity(), View.OnClickListener {
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         try {
             val account = completedTask.getResult(ApiException::class.java!!)
-
-            // Signed in successfully, show authenticated UI.
-            onSignInSuccess(account)
+            if (account != null) {
+                // Signed in successfully, show authenticated UI.
+                onSignInSuccess(account)
+            } else {
+                Toast.makeText(this, "There is no account associated with this username and passsword", Toast.LENGTH_LONG)
+            }
         } catch (e: ApiException) {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.

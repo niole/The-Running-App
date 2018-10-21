@@ -19,7 +19,9 @@ import com.google.android.gms.location.LocationCallback
 import android.support.v4.app.ActivityCompat
 import android.content.pm.PackageManager
 import android.support.v4.content.ContextCompat
+import android.widget.Toast
 import com.example.niolenelson.running.utilities.Haversine.metersToMiles
+import com.example.niolenelson.running.utilities.LocationPermissionHandler
 
 
 /**
@@ -29,12 +31,6 @@ import com.example.niolenelson.running.utilities.Haversine.metersToMiles
 class RouteActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
-
-    private val PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: Int = 1
-
-    private var attemptEnablePermissions = false
-
-    private var mLocationPermissionGranted = false
 
     private lateinit var mMap: GoogleMap
 
@@ -111,59 +107,28 @@ class RouteActivity :
                 null)
     }
 
-    private fun getLocationPermission(cb: (enabled: Boolean) -> Unit) {
-        /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
-
-
-        if (ContextCompat.checkSelfPermission(this.applicationContext,
-                android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mLocationPermissionGranted = true
-            cb(true)
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
-                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION)
-            cb(false)
-            if (!attemptEnablePermissions) {
-                attemptEnablePermissions = true
-                getLocationPermission(cb)
-            }
-        }
-    }
-
     private fun setupLocation() {
         locationRequest = LocationSettingsUtilities.getLocationRequest()
-        getLocationPermission {
-            isEnabled ->
-            if (isEnabled ) {
-                mMap.setMyLocationEnabled(true)
+        LocationPermissionHandler.getLocationPermission(this, {
+            mMap.setMyLocationEnabled(true)
 
-                val task = LocationSettingsUtilities.confirmLocationPermissions(this, locationRequest)
+            val task = LocationSettingsUtilities.confirmLocationPermissions(this, locationRequest)
 
-                task.addOnSuccessListener { locationSettingsResponse ->
-                    println(locationSettingsResponse.locationSettingsStates)
-                    val locationSettingsStates = locationSettingsResponse.locationSettingsStates
-                    val canTrackLocation = locationSettingsStates.isLocationUsable &&
-                            locationSettingsStates.isLocationPresent &&
-                            locationSettingsStates.isGpsPresent &&
-                            locationSettingsStates.isGpsUsable
-                    if (canTrackLocation) {
-                        println("location is enabled")
-                        startLocationUpdates()
-                    } else {
-                        println("location is not enabled")
-                    }
+            task.addOnSuccessListener { locationSettingsResponse ->
+                println(locationSettingsResponse.locationSettingsStates)
+                val locationSettingsStates = locationSettingsResponse.locationSettingsStates
+                val canTrackLocation = locationSettingsStates.isLocationUsable &&
+                        locationSettingsStates.isLocationPresent &&
+                        locationSettingsStates.isGpsPresent &&
+                        locationSettingsStates.isGpsUsable
+                if (canTrackLocation) {
+                    println("location is enabled")
+                    startLocationUpdates()
+                } else {
+                    println("location is not enabled")
                 }
-
-            } else {
-                println("not enbaled")
             }
-
-        }
+        })
     }
 
     private fun drawRoute() {

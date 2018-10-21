@@ -11,9 +11,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.maps.GeoApiContext
 import com.google.maps.PlacesApi
 import java.lang.Double.parseDouble
-import android.view.KeyEvent
 import android.widget.Toast
-import com.google.maps.PendingResult
 import com.google.maps.model.AutocompletePrediction
 import java.util.*
 
@@ -52,16 +50,16 @@ class InitRoutesActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
+
         routeStartInput = findViewById<ValidatedAutocompleteEditText<AutoCompleteViewDTO>>(R.id.route_start_input)
 
         routeStartInput.initTypeahead(this, R.layout.location_suggestion_item)
 
         routeStartInput.setDebouncedOnKeyListener(1000, this, {
-         keyCode: Int, event: KeyEvent ->
+            _, _ ->
             val routeStartAddress = routeStartInput.text
             PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).setCallback(autocompleteCallback)
         })
-
         setForm()
     }
 
@@ -84,7 +82,7 @@ class InitRoutesActivity :
         var numeric = true
         try {
             parseDouble(s)
-        } catch (e: NumberFormatException) {
+        } catch (e: Throwable) {
             numeric = false
         }
         return numeric
