@@ -31,13 +31,7 @@ class InitRoutesActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
 
-    private lateinit var selectedSuggestion: AutoCompleteViewDTO
-
-    private lateinit var routeStartInput: ValidatedAutocompleteEditText
-
-    var suggestions: MutableList<AutoCompleteViewDTO> = mutableListOf()
-
-    private lateinit var typeaheadAdapter: ArrayAdapter<AutoCompleteViewDTO>
+    private lateinit var routeStartInput: ValidatedAutocompleteEditText<AutoCompleteViewDTO>
 
     private lateinit var mMap: GoogleMap
 
@@ -63,39 +57,20 @@ class InitRoutesActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
+        routeStartInput = findViewById<ValidatedAutocompleteEditText<AutoCompleteViewDTO>>(R.id.route_start_input)
 
-        typeaheadAdapter = ArrayAdapter(this, R.layout.location_suggestion_item, suggestions)
-
-        routeStartInput = findViewById<ValidatedAutocompleteEditText>(R.id.route_start_input)
-        routeStartInput.setAdapter(typeaheadAdapter)
-        routeStartInput.threshold = 0
-
-        routeStartInput.setOnItemClickListener {
-           adapterView, view, index, id -> selectedSuggestion = suggestions[index]
-        }
+        routeStartInput.initTypeahead(this, R.layout.location_suggestion_item)
 
         routeStartInput.setOnKeyListener(getDebouncer(this, {
          keyCode: Int, event: KeyEvent ->
             val routeStartAddress = routeStartInput.text
             val predictions = PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).await()
             if (predictions != null) {
-                suggestions.clear()
-                suggestions.addAll(predictions.map { AutoCompleteViewDTO(it) } as ArrayList<AutoCompleteViewDTO>)
-                typeaheadAdapter.clear()
-                typeaheadAdapter.addAll(suggestions)
-                typeaheadAdapter.notifyDataSetChanged()
+                routeStartInput.updateSuggestions(predictions.map { AutoCompleteViewDTO(it) } as ArrayList<AutoCompleteViewDTO>)
             } else {
                 println("no predictions")
             }
         }))
-
-        routeStartInput.onFocusChangeListener = View.OnFocusChangeListener{
-            view, focused ->
-            if(focused) {
-                // Display the suggestion dropdown on focus
-                routeStartInput.showDropDown()
-            }
-        }
 
         setForm()
     }
@@ -156,7 +131,8 @@ class InitRoutesActivity :
             intent.putExtra("routeDistanceMiles", routeDistanceMiles)
 
             val routeStartAddress = routeStartInput.text
-            if (selectedSuggestion == null) {
+            val selectedItem = routeStartInput.selectedItem as AutoCompleteViewDTO
+            if (selectedItem == null) {
                 // just go with route start address
                 val predictions = PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).await()
                 if (predictions != null && predictions.isNotEmpty()) {
@@ -175,7 +151,7 @@ class InitRoutesActivity :
 
             } else {
                 // have selected item use that
-                val suggestion = PlacesApi.placeDetails(geoContext, selectedSuggestion.prediction.placeId).await()
+                val suggestion = PlacesApi.placeDetails(geoContext, selectedItem.prediction.placeId).await()
                 intent.putExtra("starting_lat", suggestion.geometry.location.lat)
                 intent.putExtra("starting_lng", suggestion.geometry.location.lng)
                 startActivity(intent)
