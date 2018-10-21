@@ -11,18 +11,9 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.maps.GeoApiContext
 import com.google.maps.PlacesApi
 import java.lang.Double.parseDouble
-import com.google.maps.model.AutocompletePrediction
-import android.app.Activity
 import android.view.KeyEvent
 import android.widget.Toast
 import java.util.*
-import kotlin.concurrent.schedule
-
-class AutoCompleteViewDTO(val prediction: AutocompletePrediction) {
-    override fun toString(): String {
-        return prediction.description
-    }
-}
 
 /**
  * Created by niolenelson on 7/29/18.
