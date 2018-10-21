@@ -5,9 +5,12 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
+import android.view.KeyEvent
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import java.util.*
+import kotlin.concurrent.schedule
 
 /**
  * Created by niolenelson on 10/7/18.
@@ -55,6 +58,27 @@ class ValidatedAutocompleteEditText<T> : AutoCompleteTextView, ValidatedInput {
         typeaheadAdapter = ArrayAdapter(activity, layout, suggestions)
         setAdapter(typeaheadAdapter)
         threshold = 0
+    }
+
+    fun setDebouncedOnKeyListener(delay: Long, context: Activity, cb: (keyCode: Int, event: KeyEvent) -> Unit): Unit {
+        this.setOnKeyListener(getDebouncer(delay, context , cb))
+    }
+
+    private fun getDebouncer(delay: Long, context: Activity, cb: (keyCode: Int, event: KeyEvent) -> Unit): (view: View, keyCode: Int, event: KeyEvent) -> Boolean {
+        var timer = false
+        return {
+            view: View, keyCode: Int, event: KeyEvent ->
+            if (!timer) {
+                timer = true
+                Timer("ValidatedAutocompletedEditTextDebouncer", false).schedule(delay) {
+                    timer = false
+                    context.runOnUiThread {
+                        cb(keyCode, event)
+                    }
+                }
+            }
+            false
+        }
     }
 
     override fun validator(validate: (s: String) -> Boolean, errorMessage: String, onError: () -> Unit, onSuccess: () -> Unit) {

@@ -37,23 +37,6 @@ class InitRoutesActivity :
 
     private lateinit var geoContext: GeoApiContext
 
-    private fun getDebouncer(context: Activity, cb: (keyCode: Int, event: KeyEvent) -> Unit): (view: View, keyCode: Int, event: KeyEvent) -> Boolean {
-            var timer = false
-            return {
-                view: View, keyCode: Int, event: KeyEvent ->
-                if (!timer) {
-                    timer = true
-                    Timer("SettingUp", false).schedule(500) {
-                        timer = false
-                        context.runOnUiThread {
-                            cb(keyCode, event)
-                        }
-                    }
-                }
-                false
-        }
-    }
-
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
@@ -61,7 +44,7 @@ class InitRoutesActivity :
 
         routeStartInput.initTypeahead(this, R.layout.location_suggestion_item)
 
-        routeStartInput.setOnKeyListener(getDebouncer(this, {
+        routeStartInput.setDebouncedOnKeyListener(1000, this, {
          keyCode: Int, event: KeyEvent ->
             val routeStartAddress = routeStartInput.text
             val predictions = PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).await()
@@ -70,7 +53,7 @@ class InitRoutesActivity :
             } else {
                 println("no predictions")
             }
-        }))
+        })
 
         setForm()
     }
@@ -87,9 +70,7 @@ class InitRoutesActivity :
 
     override fun onResume() {
         super.onResume()
-        val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
-        button.visibility = View.VISIBLE
-        UIUtilities.Spinner.remove(this, R.id.init_routes_container)
+        showButton()
     }
 
     private fun validateMiles(s: String): Boolean {
@@ -121,14 +102,7 @@ class InitRoutesActivity :
             )
 
         form.addOnSubmitListener {
-            val intent = Intent(this, MapsActivity::class.java)
-
-            button.visibility = View.GONE
-            UIUtilities.Spinner.add(this, R.id.init_routes_container)
-
-            val routeLengthText: String = input_route_length.text.toString()
-            val routeDistanceMiles = routeLengthText.toDouble()
-            intent.putExtra("routeDistanceMiles", routeDistanceMiles)
+            hideButton()
 
             val routeStartAddress = routeStartInput.text
             if (routeStartInput.selectedItem == null) {
@@ -137,17 +111,11 @@ class InitRoutesActivity :
                 if (predictions != null && predictions.isNotEmpty()) {
                     val place = predictions[0]
                     val details = PlacesApi.placeDetails(geoContext, place.placeId).await()
-                    val lat = details.geometry.location.lat
-                    val lng = details.geometry.location.lng
-
-                    intent.putExtra("starting_lat", lat)
-                    intent.putExtra("starting_lng", lng)
-                    startActivity(intent)
+                    startMapsActivity(details.geometry.location.lat, details.geometry.location.lng)
                 } else {
                     // user entered a nonsensical place
                     // stop spinner
-                    button.visibility = View.VISIBLE
-                    UIUtilities.Spinner.remove(this, R.id.init_routes_container)
+                    showButton()
 
                     // restart flow
                     Toast.makeText(this, "$routeStartAddress has no associated address. Enter a new starting point", Toast.LENGTH_LONG)
@@ -157,11 +125,31 @@ class InitRoutesActivity :
                 // have selected item use that
                 val selectedItem = routeStartInput.selectedItem as AutoCompleteViewDTO
                 val suggestion = PlacesApi.placeDetails(geoContext, selectedItem.prediction.placeId).await()
-                intent.putExtra("starting_lat", suggestion.geometry.location.lat)
-                intent.putExtra("starting_lng", suggestion.geometry.location.lng)
-                startActivity(intent)
+                startMapsActivity(suggestion.geometry.location.lat, suggestion.geometry.location.lng)
             }
         }
+    }
+
+    private fun hideButton() {
+        val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
+        button.visibility = View.GONE
+        UIUtilities.Spinner.add(this, R.id.init_routes_container)
+    }
+
+    private fun showButton() {
+        val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
+        button.visibility = View.VISIBLE
+        UIUtilities.Spinner.remove(this, R.id.init_routes_container)
+    }
+
+    private fun startMapsActivity(lat: Double, lng: Double) {
+        val intent = Intent(this, MapsActivity::class.java)
+        val routeLengthText: String = findViewById<ValidatedEditText>(R.id.route_length_input).text.toString()
+        val routeDistanceMiles = routeLengthText.toDouble()
+        intent.putExtra("routeDistanceMiles", routeDistanceMiles)
+        intent.putExtra("starting_lat", lat)
+        intent.putExtra("starting_lng", lng)
+        startActivity(intent)
     }
 
 }
