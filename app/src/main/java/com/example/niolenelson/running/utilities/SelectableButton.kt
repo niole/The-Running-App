@@ -13,6 +13,7 @@ class SelectableButton : Button {
     init {
         enable()
         setPadding(20, 0, 20, 0)
+        textSize = 18.toFloat()
     }
     constructor(context: Context) : super(context)
 
