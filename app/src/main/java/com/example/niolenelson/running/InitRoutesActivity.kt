@@ -6,8 +6,6 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.maps.GeoApiContext
 import com.google.maps.PlacesApi
 import java.lang.Double.parseDouble
@@ -19,8 +17,8 @@ import java.util.*
  * Created by niolenelson on 7/29/18.
  */
 class InitRoutesActivity :
-        AppCompatActivity(),
-        OnMapReadyCallback {
+        AppCompatActivity() {
+    private val searchedPhrases: MutableSet<String> = mutableSetOf()
 
     private val autocompleteCallback: APICallback<Array<AutocompletePrediction>> = APICallback()
 
@@ -47,8 +45,7 @@ class InitRoutesActivity :
         }
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
+    private fun initForm() {
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
 
         routeStartInput = findViewById<ValidatedAutocompleteEditText<AutoCompleteViewDTO>>(R.id.route_start_input)
@@ -57,8 +54,11 @@ class InitRoutesActivity :
 
         routeStartInput.setDebouncedOnKeyListener(1000, this, {
             _, _ ->
-            val routeStartAddress = routeStartInput.text
-            PlacesApi.queryAutocomplete(geoContext, routeStartAddress.toString()).setCallback(autocompleteCallback)
+            val routeStartAddress = routeStartInput.text.toString()
+            if (!searchedPhrases.contains(routeStartAddress)) {
+                searchedPhrases.add(routeStartAddress)
+                PlacesApi.queryAutocomplete(geoContext, routeStartAddress).setCallback(autocompleteCallback)
+            }
         })
         setForm()
     }
@@ -66,11 +66,7 @@ class InitRoutesActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_init_routes)
-
-        val mapFragment = supportFragmentManager
-                .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
+        initForm()
     }
 
     override fun onResume() {
@@ -154,6 +150,7 @@ class InitRoutesActivity :
         intent.putExtra("routeDistanceMiles", routeDistanceMiles)
         intent.putExtra("starting_lat", lat)
         intent.putExtra("starting_lng", lng)
+        routeStartInput.clear()
         startActivity(intent)
     }
 

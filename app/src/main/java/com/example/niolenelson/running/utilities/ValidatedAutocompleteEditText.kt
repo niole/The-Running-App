@@ -43,9 +43,17 @@ class ValidatedAutocompleteEditText<T> : AutoCompleteTextView, ValidatedInput {
         }
 
         this.setOnItemClickListener {
-            adapterView, view, index, id -> selectedItem = suggestions[index]
+            adapterView, view, index, id ->
+            selectedItem = typeaheadAdapter.getItem(index)
         }
 
+    }
+
+    fun clear() {
+        selectedItem = null
+        suggestionsSet.clear()
+        suggestions.clear()
+        typeaheadAdapter.clear()
     }
 
     private fun addNewSuggestions(newSuggestions: ArrayList<T>) {
@@ -76,6 +84,11 @@ class ValidatedAutocompleteEditText<T> : AutoCompleteTextView, ValidatedInput {
         var timer = false
         return {
             view: View, keyCode: Int, event: KeyEvent ->
+
+            if (selectedItem != null) {
+                selectedItem = null
+            }
+
             if (!timer) {
                 timer = true
                 Timer("ValidatedAutocompletedEditTextDebouncer", false).schedule(delay) {
