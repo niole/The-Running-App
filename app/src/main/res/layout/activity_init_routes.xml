@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <com.example.niolenelson.running.utilities.ValidatedForm
         xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_marginTop="100dp"
+        android:gravity="center_horizontal"
         android:id="@+id/init_routes_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -13,20 +15,19 @@
             android:id="@+id/route_start_input"
             android:layout_width="285dp"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
             android:hint="enter a starting point"
-            android:padding="5dp" />
+            />
         <com.example.niolenelson.running.utilities.ValidatedEditText
             android:id="@+id/route_length_input"
             android:layout_width="285dp"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:hint="enter route length in miles"
-            android:padding="5dp" />
+            android:hint="enter route length in miles" />
         <com.example.niolenelson.running.utilities.SelectableButton
             android:id="@+id/route_length_input_submit"
+            android:gravity="center"
+            android:textSize="18dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Go"/>
     </com.example.niolenelson.running.utilities.ValidatedForm>
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

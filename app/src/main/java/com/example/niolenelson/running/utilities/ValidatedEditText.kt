@@ -4,14 +4,13 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
-import android.widget.EditText
 
 /**
  * validated edit text input
  * Created by niolenelson on 7/29/18.
  */
 
-class ValidatedEditText : EditText, ValidatedInput {
+class ValidatedEditText : StyledEditText, ValidatedInput {
 
     constructor(context: Context): super(context)
 

@@ -8,14 +8,13 @@ import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import java.util.*
 import kotlin.concurrent.schedule
 
 /**
  * Created by niolenelson on 10/7/18.
  */
-class ValidatedAutocompleteEditText<T> : AutoCompleteTextView, ValidatedInput {
+class ValidatedAutocompleteEditText<T> : StyledAutocompleteEditText, ValidatedInput {
 
     var selectedItem: T? = null
 
