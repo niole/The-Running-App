@@ -5,16 +5,19 @@ import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
-import android.view.KeyEvent
 import android.view.View
 import android.widget.ArrayAdapter
 import java.util.*
-import kotlin.concurrent.schedule
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
 
 /**
  * Created by niolenelson on 10/7/18.
  */
 class ValidatedAutocompleteEditText<T> : StyledAutocompleteEditText, ValidatedInput {
+
+    private var debouncedTextChangeCallback: () -> Boolean = { false }
 
     var selectedItem: T? = null
 
@@ -75,29 +78,28 @@ class ValidatedAutocompleteEditText<T> : StyledAutocompleteEditText, ValidatedIn
         threshold = 0
     }
 
-    fun setDebouncedOnKeyListener(delay: Long, context: Activity, cb: (keyCode: Int, event: KeyEvent) -> Unit): Unit {
-        this.setOnKeyListener(getDebouncer(delay, context , cb))
+    fun setDebouncedOnKeyListener(delay: Long, context: Activity, cb: () -> Unit) {
+        debouncedTextChangeCallback = getDebouncer(delay, context, cb)
     }
 
-    private fun getDebouncer(delay: Long, context: Activity, cb: (keyCode: Int, event: KeyEvent) -> Unit): (view: View, keyCode: Int, event: KeyEvent) -> Boolean {
+    private fun getDebouncer(delay: Long, context: Activity, cb: () -> Unit): () -> Boolean {
         var timer = false
         return {
-            view: View, keyCode: Int, event: KeyEvent ->
-
             if (selectedItem != null) {
                 selectedItem = null
             }
 
             if (!timer) {
                 timer = true
-                Timer("ValidatedAutocompletedEditTextDebouncer", false).schedule(delay) {
+                Executors.newSingleThreadScheduledExecutor().schedule({
                     timer = false
                     context.runOnUiThread {
-                        cb(keyCode, event)
+                        cb()
                     }
-                }
+                }, delay, TimeUnit.MILLISECONDS)
+
             }
-            false
+            true
         }
     }
 
@@ -114,6 +116,7 @@ class ValidatedAutocompleteEditText<T> : StyledAutocompleteEditText, ValidatedIn
                     onError()
                 } else {
                     error = null
+                    debouncedTextChangeCallback()
                     onSuccess()
                 }
             }

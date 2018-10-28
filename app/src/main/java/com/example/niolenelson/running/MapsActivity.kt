@@ -8,10 +8,7 @@ import android.support.v7.widget.RecyclerView
 import android.widget.Button
 import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.*
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.maps.*
 import com.google.maps.model.Bounds
@@ -93,7 +90,7 @@ class MapsActivity :
         val lat: Double = intent.getDoubleExtra("starting_lat", 0.toDouble())
         val lng: Double = intent.getDoubleExtra("starting_lng", 0.toDouble())
         startingPoint = LatLng(lat, lng)
-        javaStartingPoint =JavaLatLng(lat, lng)
+        javaStartingPoint = JavaLatLng(lat, lng)
     }
 
     private fun generateRoutesData() {
@@ -137,10 +134,9 @@ class MapsActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-        mMap.addMarker(MarkerOptions().position(startingPoint).title("Home"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(startingPoint))
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
         mMap.uiSettings.setZoomControlsEnabled(true)
+        mMap.addMarker(MarkerOptions().position(startingPoint))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startingPoint, 15.toFloat()))
     }
 
     fun removeRouteAtIndex(index: Int) {

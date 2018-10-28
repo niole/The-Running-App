@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.niolenelson.running">
+
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
@@ -18,7 +19,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
@@ -45,13 +45,17 @@
         </activity>
         <activity
             android:name=".InitRoutesActivity"
-            android:label="Where do you want to go?">
-        </activity>
+            android:label="Where do you want to go?"></activity>
         <activity
             android:name=".MapsActivity"
-            android:label="Pick a Route">
-        </activity>
-        <activity android:name=".RouteActivity" android:label="Go!">
-        </activity>
+            android:label="Pick a Route"></activity>
+        <activity
+            android:name=".RouteActivity"
+            android:label="Go!"></activity>
+        <activity
+            android:name=".utilities.AppCompatLoggerActivity"
+            android:label="@string/title_activity_app_compat_logger"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
+
 </manifest>
