@@ -1,31 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/running_logo"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <com.example.niolenelson.running.utilities.ValidatedForm
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_marginTop="100dp"
-        android:gravity="center_horizontal"
+        android:padding="20sp"
         android:id="@+id/init_routes_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
         <com.example.niolenelson.running.utilities.ValidatedAutocompleteEditText
             android:id="@+id/route_start_input"
-            android:layout_width="285dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="50sp"
+            android:layout_marginBottom="50sp"
             android:hint="enter a starting point"
             />
         <com.example.niolenelson.running.utilities.ValidatedEditText
             android:id="@+id/route_length_input"
-            android:layout_width="285dp"
+            android:layout_width="match_parent"
+            android:layout_marginBottom="50sp"
             android:layout_height="wrap_content"
             android:hint="enter route length in miles" />
         <com.example.niolenelson.running.utilities.SelectableButton
             android:id="@+id/route_length_input_submit"
-            android:gravity="center"
-            android:layout_width="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Go"/>
     </com.example.niolenelson.running.utilities.ValidatedForm>
