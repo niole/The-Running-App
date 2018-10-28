@@ -1,5 +1,6 @@
 package com.example.niolenelson.running
 
+import com.example.niolenelson.running.utilities.*
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
@@ -13,12 +14,16 @@ import android.widget.Toast
 import com.example.niolenelson.running.utilities.LocationPermissionHandler
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
+import java.util.logging.Logger
 
 
 /**
  * Created by niolenelson on 10/7/18.
  */
 class SigninActivity : AppCompatActivity(), View.OnClickListener {
+
+    val logger: Logger = logger()
+
     val RC_SIGN_IN = 0
 
     lateinit var mGoogleSignInClient: GoogleSignInClient
@@ -44,20 +49,15 @@ class SigninActivity : AppCompatActivity(), View.OnClickListener {
         if (account != null) {
             // launch init routes view
            onSignInSuccess(account)
-        } else {
-
-            if (mGoogleSignInClient != null) {
-                println("not null")
-            } else {
-                println("google signin client is not initialized")
-            }
-
         }
     }
 
     private fun onSignInSuccess(account: GoogleSignInAccount) {
+        logger.info("Successful signin for account: $account")
+
         LocationPermissionHandler.getLocationPermission(this, {
             val intent = Intent(this, InitRoutesActivity::class.java)
+            logger.info("Granted location permission")
             startActivity(intent)
         })
     }
@@ -88,6 +88,8 @@ class SigninActivity : AppCompatActivity(), View.OnClickListener {
             // a listener.
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             handleSignInResult(task)
+        } else {
+            logger.warning("Unhandled google signin code returned on attempted auth. code: $requestCode")
         }
     }
 
@@ -95,15 +97,13 @@ class SigninActivity : AppCompatActivity(), View.OnClickListener {
         try {
             val account = completedTask.getResult(ApiException::class.java!!)
             if (account != null) {
-                // Signed in successfully, show authenticated UI.
                 onSignInSuccess(account)
             } else {
+                logger.info("No account associated with username and password")
                 Toast.makeText(this, "There is no account associated with this username and passsword", Toast.LENGTH_LONG)
             }
         } catch (e: ApiException) {
-            // The ApiException status code indicates the detailed failure reason.
-            // Please refer to the GoogleSignInStatusCodes class reference for more information.
-            println("signin failed")
+            logger.warning("Unable to complete google signin flow. error: $e")
         }
 
     }
