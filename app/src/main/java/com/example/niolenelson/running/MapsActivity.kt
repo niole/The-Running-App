@@ -4,17 +4,18 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.widget.Button
 import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.maps.*
-import com.google.maps.model.Bounds
-import com.google.maps.model.SnappedPoint
 import com.google.maps.model.LatLng as JavaLatLng
 import com.google.maps.DirectionsApi.newRequest
+import com.google.maps.model.DistanceMatrix
+import com.google.maps.model.DistanceMatrixRow
+import com.google.maps.model.PlaceType
+import com.google.maps.model.PlacesSearchResponse
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
@@ -23,6 +24,11 @@ import java.io.Serializable
 class MapsActivity :
         AppCompatActivity(),
         OnMapReadyCallback {
+
+    private val generatedRoutesAdapter = GeneratedRoutesAdapter(arrayListOf(), this)
+
+    private val logger = logger()
+
     private lateinit var startingPoint: LatLng
 
     private var routeDistanceMiles: Double = 0.0
@@ -37,15 +43,41 @@ class MapsActivity :
 
     private lateinit var geoContext: GeoApiContext
 
-    private lateinit var routeBounds: LatLngBounds
-
-    private var pathData: Map<String, SnappedPoint> = mapOf()
+    private var pathData: Array<JavaLatLng> = arrayOf()
 
     private var generatedRoutes: List<List<JavaLatLng>> = listOf()
 
     private var currentPolylines: Map<Int, Polyline> = mapOf()
 
     private var selectedRoute = -1
+
+    private val nearbyPlacesCallback: APICallback<PlacesSearchResponse> = APICallback()
+
+    lateinit private var routeGenerator: RouteGenerator
+
+    init {
+        nearbyPlacesCallback.addOnResult {
+            searchResults ->
+
+            searchResults.results.forEach {
+                pathData = pathData.plus(it.geometry.location)
+                this.runOnUiThread {
+                    handlePathDataProcessing()
+                }
+            }
+        }
+        nearbyPlacesCallback.addOnFailure {
+            error -> logger.warning("Error while getting nearby places for route creation. error: $error, message: ${error?.message}")
+        }
+    }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
+        mMap.uiSettings.setZoomControlsEnabled(true)
+        mMap.addMarker(MarkerOptions().position(startingPoint))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startingPoint, 15.toFloat()))
+    }
 
     override fun onResume() {
         super.onResume()
@@ -61,13 +93,30 @@ class MapsActivity :
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
         val linearLayoutManager = LinearLayoutManager(this)
         linearLayoutManager.orientation = LinearLayout.HORIZONTAL
         this.generated_routes_list.layoutManager = linearLayoutManager
+        generated_routes_list.adapter = generatedRoutesAdapter
 
         setStartingPoint(intent)
 
-        setGeneratedRoutesData(this.generated_routes_list)
+        setGeneratedRoutesData()
+
+        setGetDirectionsButton()
+
+        setCreateNextRouteButton()
+    }
+
+    private fun setCreateNextRouteButton() {
+        val nextRouteButton = findViewById<Button>(R.id.next_route_button)
+        nextRouteButton.setOnClickListener {
+            println("sdlfkjsd")
+            setNextRouteInSuggestionsList()
+        }
+    }
+
+    private fun setGetDirectionsButton() {
         val getDirectionsButton = findViewById<Button>(R.id.get_directions_button)
         getDirectionsButton.setOnClickListener {
             if (selectedRoute > -1) {
@@ -93,50 +142,51 @@ class MapsActivity :
         javaStartingPoint = JavaLatLng(lat, lng)
     }
 
+    /**
+     * Gets a bunch of points and sets them on pathData
+     */
     private fun generateRoutesData() {
-        // TODO i think there is some duplicated work in this function
-        // TODO need to better pick patches where we get points from
-        // clustered and intersecting roads are pretty safe to get a bunch of random points
-        // from
-        // when roads tightly coupled tho, how do we pick area where we get data better
-        // how do we know where a reasonable cluster of roads are?
-        val totalBoundFinds = Math.ceil(routeDistanceMiles / 2).toInt()
 
-        val point = javaStartingPoint
-        val bounds = getBounds(point)
-        val surroundingBounds = getSurroundingGridBounds(bounds.northeast, bounds.southwest)
-
-        if (totalBoundFinds >= 1) {
-            setPathDataInBounds(surroundingBounds)
-        }
-
-        for (i in 1..(totalBoundFinds - 1)) {
-            setPathDataInBounds(
-                    getSurroundingGridBounds(
-                            JavaLatLng(routeBounds.northeast.latitude, routeBounds.northeast.longitude),
-                            JavaLatLng(routeBounds.southwest.latitude, routeBounds.southwest.longitude)
-                    )
-            )
-        }
+        val nearbyPlacesRequest = PlacesApi.nearbySearchQuery(geoContext, javaStartingPoint)
+        nearbyPlacesRequest
+                .radius(Haversine.milesToMeters(routeDistanceMiles).toInt())
+                .type(PlaceType.PARK)
+                .setCallback(nearbyPlacesCallback)
     }
 
-    private fun setGeneratedRoutesData(generated_routes_list: RecyclerView) {
-        val activity = this
+    private fun setGeneratedRoutesData() {
         launch(UI) {
             generateRoutesData()
-            prunePathData()
-            val routes: List<List<JavaLatLng>> = getCircles()
-            generatedRoutes  = routes
-            generated_routes_list.adapter = GeneratedRoutesAdapter(generatedRoutes as ArrayList<com.google.maps.model.LatLng>, activity)
         }
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-        mMap.uiSettings.setZoomControlsEnabled(true)
-        mMap.addMarker(MarkerOptions().position(startingPoint))
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startingPoint, 15.toFloat()))
+
+    private fun handlePathDataProcessing() {
+        prunePathData()
+
+        // TODO make sure there is less than 26 pathData data points
+       routeGenerator = RouteGenerator(1000.0, javaStartingPoint, Haversine.milesToMeters(routeDistanceMiles), geoContext, pathData)
+    }
+
+
+    private fun setNextRouteInSuggestionsList() {
+       if (routeGenerator != null) {
+           val nextRoute = routeGenerator.next()
+           if (nextRoute.isNotEmpty()) {
+               // could generate a route add to the suggestions array adapter
+              val nextRoute = listOf(listOf(javaStartingPoint).plus(nextRoute.plus(javaStartingPoint)))
+              generatedRoutes = generatedRoutes.plus(nextRoute)
+              generatedRoutesAdapter.addItem()
+           }
+
+           if (!routeGenerator.hasMoreRoutes()) {
+               // disable button and tell user
+               logger.info("Oh no there are no more routes")
+           }
+
+       } else {
+           logger.warning("Use is asking for routes before the route generator is initialized")
+       }
     }
 
     fun removeRouteAtIndex(index: Int) {
@@ -160,14 +210,14 @@ class MapsActivity :
     }
 
     private fun prunePathData() {
-        var keptPoints = arrayOf<SnappedPoint>()
-        val prunedMap = pathData.filterValues {
-            val closePoint = keptPoints.find { seenPoint: SnappedPoint ->
+        var keptPoints = arrayOf<JavaLatLng>()
+        val prunedMap = pathData.filter {
+            val closePoint = keptPoints.find { seenPoint: JavaLatLng ->
                 getDistanceBetweenCoordinates(
-                        seenPoint.location.lat,
-                        it.location.lat,
-                        seenPoint.location.lng,
-                        it.location.lng
+                        seenPoint.lat,
+                        it.lat,
+                        seenPoint.lng,
+                        it.lng
                 ) <= uniquePointDistanceMiles
             }
             if (closePoint != null) {
@@ -178,23 +228,7 @@ class MapsActivity :
             }
         }
 
-       pathData = prunedMap
-    }
-
-    /**
-     * gets points on roads in bounded patches described in the arguments
-     */
-    private fun setPathDataInBounds(surroundingBounds: Array<LatLngBounds>) {
-        val markerAddresses: Array<SnappedPoint> = (surroundingBounds.flatMap {
-            getPointsInBounds(
-                    JavaLatLng(it.northeast.latitude, it.northeast.longitude),
-                    JavaLatLng(it.southwest.latitude, it.southwest.longitude)
-            ).asIterable()
-        }).toTypedArray()
-
-        markerAddresses.forEach {
-            pathData = pathData.plus(Pair(it.placeId, it))
-        }
+       pathData = prunedMap.toTypedArray()
     }
 
     private fun getDistanceBetweenCoordinates(lat1: Double, lat2: Double, lon1: Double, lon2: Double): Double {
@@ -223,19 +257,19 @@ class MapsActivity :
     }
 
     /**
-     * Goes over Array<SnappedPoint> and picks concentric circles of points that start and end
+     * Goes over pathData and picks concentric circles of points that start and end
      * at the starting point
      */
     private fun getCircles(): List<List<JavaLatLng>> {
         var circles = listOf<List<JavaLatLng>>()
-        val pathDataValues = pathData.values.toList()
+        val pathDataValues = pathData.toList()
 
         for (i in 0..(pathDataValues.size - 1)) {
-            val startingPath = listOf(javaStartingPoint, pathDataValues[i].location)
+            val startingPath = listOf(javaStartingPoint, pathDataValues[i])
             circles = circles.plus(
                 buildCircles(
                         startingPath,
-                        pathDataValues.take(i).plus(pathDataValues.drop(i + 1)).map { it.location },
+                        pathDataValues.take(i).plus(pathDataValues.drop(i + 1)),
                         getPathDistance(startingPath),
                         AngleGetter.getAngleFromNorthOnUnitCircle(javaStartingPoint)
                 ).filter { it.size > 0 }
@@ -271,83 +305,6 @@ class MapsActivity :
             }
         }
         return listOf(listOf())
-    }
-
-    /**
-     * get surrounding 8 squares that surround original bounding area
-     */
-    private fun getSurroundingGridBounds(northeast: JavaLatLng, southwest: JavaLatLng): Array<LatLngBounds> {
-        val squareHeight = Math.abs(northeast.lat - southwest.lat)
-        val squareWidth = Math.abs(northeast.lng - southwest.lng)
-
-        val topSquareSW = LatLng(northeast.lat, southwest.lng)
-        val topSquareNE = LatLng(northeast.lat + squareHeight, northeast.lng)
-        val topSquare = LatLngBounds(topSquareSW, topSquareNE)
-
-        val topRightSquare = LatLngBounds(
-                LatLng(topSquareSW.latitude, topSquareSW.longitude + squareWidth),
-                LatLng(topSquareNE.latitude, topSquareSW.longitude + squareWidth)
-        )
-
-        val topLeftSquare = LatLngBounds(
-                LatLng(topSquareSW.latitude, topSquareSW.longitude - squareWidth),
-                LatLng(topSquareNE.latitude, topSquareSW.longitude - squareWidth)
-        )
-
-        val leftSquare = LatLngBounds(
-                LatLng(southwest.lat, southwest.lng - squareWidth),
-                LatLng(northeast.lat, northeast.lng - squareWidth)
-        )
-
-        val rightSquare = LatLngBounds(
-                LatLng(southwest.lat, southwest.lng + squareWidth),
-                LatLng(northeast.lat, northeast.lng + squareWidth)
-        )
-
-        val bottomMiddleSquare = LatLngBounds(
-                LatLng(southwest.lat - squareHeight, southwest.lng),
-                LatLng(northeast.lat - squareHeight, northeast.lng)
-        )
-
-        val bottomRightSquare = LatLngBounds(
-                LatLng(southwest.lat - squareHeight, southwest.lng + squareWidth),
-                LatLng(northeast.lat - squareHeight, northeast.lng + squareWidth)
-        )
-
-        val bottomLeftSquare = LatLngBounds(
-                LatLng(southwest.lat - squareHeight, southwest.lng - squareWidth),
-                LatLng(northeast.lat - squareHeight, northeast.lng - squareWidth)
-        )
-
-        routeBounds = LatLngBounds(
-            bottomLeftSquare.southwest,
-            topRightSquare.northeast
-        )
-
-        return arrayOf(
-                topSquare,
-                topRightSquare,
-                topLeftSquare,
-                leftSquare,
-                rightSquare,
-                bottomMiddleSquare,
-                bottomRightSquare,
-                bottomLeftSquare
-        )
-    }
-
-    /**
-     * get view points bounds as lat lng points
-     */
-    private fun getBounds(latLng: JavaLatLng): Bounds {
-        val address = GeocodingApi.reverseGeocode(geoContext, latLng).await()
-        return address[0].geometry.viewport
-    }
-
-    private fun getPointsInBounds(northeast: JavaLatLng, southwest: JavaLatLng): Array<SnappedPoint> {
-        // val points = RoadsApi.snapToRoads(geoContext, true, northeast, southwest).await()
-        val points = RoadsApi.nearestRoads(geoContext, northeast, southwest).await()
-        return points ?: arrayOf()
     }
 
 }

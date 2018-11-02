@@ -16,11 +16,6 @@ import com.google.maps.model.LatLng
 import com.google.android.gms.location.LocationAvailability
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationCallback
-import android.support.v4.app.ActivityCompat
-import android.content.pm.PackageManager
-import android.support.v4.content.ContextCompat
-import android.widget.Toast
-import com.example.niolenelson.running.utilities.Haversine.metersToMiles
 import com.example.niolenelson.running.utilities.LocationPermissionHandler
 
 
@@ -59,11 +54,6 @@ class RouteActivity :
         startingPoint = intent.extras.get("startingPoint") as LatLng
         val directionsResult = intent.extras.get("directionsResult") as DirectionsResult
         directions = LocalDirectionApi.getDirections(directionsResult)
-
-        println("ROUTE DISTANCE                   kjkkjk  kj")
-        println(directions.fold(0.toDouble()) {
-           distance, nextDirection -> distance + metersToMiles(nextDirection.distanceMeters.toDouble())
-        })
 
         fusedLocationClient = getFusedLocationProviderClient(this)
 
@@ -140,9 +130,9 @@ class RouteActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(com.google.android.gms.maps.model.LatLng(startingPoint.lat, startingPoint.lng)))
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
+
         mMap.uiSettings.setZoomControlsEnabled(true)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(com.google.android.gms.maps.model.LatLng(startingPoint.lat, startingPoint.lng), 15.toFloat()))
 
         setupLocation()
 

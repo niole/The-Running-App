@@ -13,14 +13,13 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.route_item.view.*
 import com.google.maps.model.LatLng as JavaLatLng
 
-class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private val context: MapsActivity) : RecyclerView.Adapter<ViewHolder>() {
+class GeneratedRoutesAdapter(private var items : List<Int>, private val context: MapsActivity) : RecyclerView.Adapter<ViewHolder>() {
     private var selectedPosition: Int = -1
 
-    fun getSelectedItem(): JavaLatLng? {
-       if (selectedPosition > -1) {
-           return items[selectedPosition]
-       }
-       return null
+    fun addItem() {
+        // TODO this feels weird
+        items = items.plus(items.size)
+        notifyDataSetChanged()
     }
 
     // Gets the number of animals in the list

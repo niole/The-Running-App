@@ -22,6 +22,14 @@ object Haversine {
         return distance(lat1, lon1, lat2, lon2, 'K') / 1.609
     }
 
+    fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        return distance(lat1, lon1, lat2, lon2, 'K') * 1000
+    }
+
+    fun milesToMeters(miles: Double): Double {
+        return miles * 1609
+    }
+
     fun metersToMiles(meters: Double): Double {
         return meters / 1609
     }
