@@ -3,17 +3,17 @@ package com.example.niolenelson.running
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.constraint.ConstraintLayout
 import android.support.v7.widget.LinearLayoutManager
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.Toast
 import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.maps.*
 import com.google.maps.model.LatLng as JavaLatLng
 import com.google.maps.DirectionsApi.newRequest
-import com.google.maps.model.DistanceMatrix
-import com.google.maps.model.DistanceMatrixRow
 import com.google.maps.model.PlaceType
 import com.google.maps.model.PlacesSearchResponse
 import kotlinx.android.synthetic.main.activity_maps.*
@@ -81,7 +81,7 @@ class MapsActivity :
 
     override fun onResume() {
         super.onResume()
-        UIUtilities.Spinner.remove(this, R.id.maps_activity_container)
+        UIUtilities.Spinner.remove(this, findViewById<ConstraintLayout>(R.id.maps_activity_layout_container))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,7 +111,6 @@ class MapsActivity :
     private fun setCreateNextRouteButton() {
         val nextRouteButton = findViewById<Button>(R.id.next_route_button)
         nextRouteButton.setOnClickListener {
-            println("sdlfkjsd")
             setNextRouteInSuggestionsList()
         }
     }
@@ -122,7 +121,7 @@ class MapsActivity :
             if (selectedRoute > -1) {
                 val result = newRequest(geoContext).origin(javaStartingPoint).destination(javaStartingPoint).waypoints(*generatedRoutes[selectedRoute].toTypedArray()).optimizeWaypoints(true).await()
 
-                UIUtilities.Spinner.add(this, R.id.maps_activity_container)
+                UIUtilities.Spinner.add(this, findViewById<ConstraintLayout>(R.id.maps_activity_layout_container))
 
                 val intent = Intent(this, RouteActivity::class.java)
 
@@ -171,7 +170,9 @@ class MapsActivity :
 
     private fun setNextRouteInSuggestionsList() {
        if (routeGenerator != null) {
+           UIUtilities.Spinner.add(this, findViewById<ConstraintLayout>(R.id.maps_activity_layout_container))
            val nextRoute = routeGenerator.next()
+           UIUtilities.Spinner.remove(this, findViewById<ConstraintLayout>(R.id.maps_activity_layout_container))
            if (nextRoute.isNotEmpty()) {
                // could generate a route add to the suggestions array adapter
               val nextRoute = listOf(listOf(javaStartingPoint).plus(nextRoute.plus(javaStartingPoint)))
@@ -180,11 +181,14 @@ class MapsActivity :
            }
 
            if (!routeGenerator.hasMoreRoutes()) {
-               // disable button and tell user
+
+               findViewById<SelectableButton>(R.id.next_route_button).disable()
+                Toast.makeText(baseContext, "There are no more possible routes", Toast.LENGTH_LONG).show()
                logger.info("Oh no there are no more routes")
            }
 
        } else {
+           Toast.makeText(baseContext, "Wait one second while we setup route generation", Toast.LENGTH_LONG).show()
            logger.warning("Use is asking for routes before the route generator is initialized")
        }
     }

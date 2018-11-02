@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import android.widget.LinearLayout
 import com.example.niolenelson.running.utilities.*
 import com.google.maps.GeoApiContext
 import com.google.maps.PlacesApi
@@ -168,13 +169,13 @@ class InitRoutesActivity :  AppCompatActivity() {
     private fun hideButton() {
         val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
         button.visibility = View.GONE
-        UIUtilities.Spinner.add(this, R.id.init_routes_container)
+        UIUtilities.Spinner.add(this, findViewById<LinearLayout>(R.id.init_routes_container))
     }
 
     private fun showButton() {
         val button = findViewById<SelectableButton>(R.id.route_length_input_submit)
         button.visibility = View.VISIBLE
-        UIUtilities.Spinner.remove(this, R.id.init_routes_container)
+        UIUtilities.Spinner.remove(this, findViewById<LinearLayout>(R.id.init_routes_container))
     }
 
     private fun startMapsActivity(lat: Double, lng: Double) {

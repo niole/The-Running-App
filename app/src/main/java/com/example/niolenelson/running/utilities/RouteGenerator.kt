@@ -1,7 +1,9 @@
  package com.example.niolenelson.running.utilities
 
 import com.google.maps.DirectionsApi
+import com.google.maps.DirectionsApi.newRequest
 import com.google.maps.GeoApiContext
+import com.google.maps.model.DirectionsResult
 import com.google.maps.model.LatLng
 
  data class WayPoint(val node: LatLng, val length: Double, val children: List<WayPoint>) {
@@ -12,9 +14,9 @@ import com.google.maps.model.LatLng
 
 class RouteGenerator(val routeError: Double, val start: LatLng, val routeLengthMeters: Double, val geoApiContext: GeoApiContext, val wayPoints: Array<LatLng>) {
     /**
-     * previously fetched real route lengths
+     * previously fetched directions that are of suitable route length
      */
-    private var lineSegments: Map<LatLng, Array<Pair<LatLng, Double>>> = mapOf()
+    private var directions: Map<Int, DirectionsResult> = mapOf()
 
     /**
      * do not contain start and end points
@@ -36,7 +38,7 @@ class RouteGenerator(val routeError: Double, val start: LatLng, val routeLengthM
     fun next(): List<LatLng> {
         if (index < patterns.size - 1) {
             index += 1
-            while(index < patterns.size - 1 && !canPickRoute(patterns[index])) {
+            while(index < patterns.size - 1 && !canPickRoute(index, patterns[index])) {
                 index += 1
             }
             if (index < patterns.size) {
@@ -53,8 +55,17 @@ class RouteGenerator(val routeError: Double, val start: LatLng, val routeLengthM
     /**
      * gets real length of route and determines if can be suggested to the user
      */
-    private fun canPickRoute(route: List<LatLng>): Boolean {
-        return true
+    private fun canPickRoute(index: Int, route: List<LatLng>): Boolean {
+        val result = newRequest(geoApiContext).origin(start).destination(start).waypoints(*route.toTypedArray()).optimizeWaypoints(true).await()
+        directions.plus(Pair(index, result))
+
+        val totalRoutes = result.routes.size
+        if (totalRoutes > 0) {
+            // TODO how to deal with different routes?
+            val isSuitable = isDistanceSuitable(result.routes[0].legs.sumBy { leg -> leg.distance.inMeters.toInt() }.toDouble())
+            return isSuitable
+        }
+        return false
     }
 
     private fun buildSuggestionTree(): List<WayPoint> {
@@ -119,14 +130,14 @@ class RouteGenerator(val routeError: Double, val start: LatLng, val routeLengthM
      * will be given to a user
      */
     private fun isDistanceSuitable(totalDistance: Double): Boolean {
-        return totalDistance >= routeLengthMeters - routeError && totalDistance <= routeLengthMeters + routeError
+        return totalDistance >= routeLengthMeters - routeError && totalDistance <= routeLengthMeters
     }
 
     /**
      * determines whether a distance is suitable for a route suggestion
      */
     private fun isDistanceSuggestionSuitable(totalDistance: Double): Boolean {
-        return totalDistance <= routeLengthMeters + routeError
+        return totalDistance <= routeLengthMeters
     }
 
     private fun getTotalDistance(lastPoint: LatLng, toPick: LatLng, distanceSoFar: Double): Double {

@@ -2,7 +2,7 @@ package com.example.niolenelson.running.utilities
 
 import android.app.Activity
 import android.view.LayoutInflater
-import android.widget.LinearLayout
+import android.view.ViewGroup
 import android.widget.ProgressBar
 import com.example.niolenelson.running.R
 
@@ -13,15 +13,15 @@ import com.example.niolenelson.running.R
 
 object UIUtilities {
     object Spinner {
-        fun add(context: Activity, viewId: Int) {
+        fun add(context: Activity, view: ViewGroup) {
             val inflater = LayoutInflater.from(context)
             val spinner = inflater.inflate(R.layout.spinner, null, false)
-            context.findViewById<LinearLayout>(viewId).addView(spinner)
+            view.addView(spinner)
         }
 
-        fun remove(context: Activity, viewId: Int) {
+        fun remove(context: Activity, view: ViewGroup) {
             val spinner = context.findViewById<ProgressBar>(R.id.loadingPanel)
-            context.findViewById<LinearLayout>(viewId).removeView(spinner)
+            view.removeView(spinner)
         }
     }
 }
