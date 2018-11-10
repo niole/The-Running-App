@@ -59,11 +59,10 @@ class MapsActivity :
         nearbyPlacesCallback.addOnResult {
             searchResults ->
 
-            searchResults.results.forEach {
-                pathData = pathData.plus(it.geometry.location)
-                this.runOnUiThread {
-                    handlePathDataProcessing()
-                }
+            val points = searchResults.results.map {it.geometry.location }
+            pathData = pathData.plus(points)
+            this.runOnUiThread {
+                handlePathDataProcessing()
             }
         }
         nearbyPlacesCallback.addOnFailure {
@@ -145,13 +144,22 @@ class MapsActivity :
      * Gets a bunch of points and sets them on pathData
      */
     private fun generateRoutesData() {
-
-        val nearbyPlacesRequest = PlacesApi.nearbySearchQuery(geoContext, javaStartingPoint)
-        nearbyPlacesRequest
+        val nearbyParks = PlacesApi.nearbySearchQuery(geoContext, javaStartingPoint)
                 .radius(Haversine.milesToMeters(routeDistanceMiles).toInt())
                 .type(PlaceType.PARK)
-                .setCallback(nearbyPlacesCallback)
+                .await()
+        val points = nearbyParks.results.map {it.geometry.location }
+        pathData = pathData.plus(fillInPoints(points))
+        this.runOnUiThread {
+            handlePathDataProcessing()
+        }
+
     }
+
+    private fun fillInPoints(points: List<JavaLatLng>): List<JavaLatLng> {
+        return points
+    }
+
 
     private fun setGeneratedRoutesData() {
         launch(UI) {
@@ -164,7 +172,13 @@ class MapsActivity :
         prunePathData()
 
         // TODO make sure there is less than 26 pathData data points
-       routeGenerator = RouteGenerator(1000.0, javaStartingPoint, Haversine.milesToMeters(routeDistanceMiles), geoContext, pathData)
+       routeGenerator = RouteGenerator(
+               2000.0,
+               javaStartingPoint,
+               Haversine.milesToMeters(routeDistanceMiles),
+               geoContext,
+               pathData
+       )
     }
 
 

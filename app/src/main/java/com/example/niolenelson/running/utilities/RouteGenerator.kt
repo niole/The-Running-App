@@ -56,6 +56,7 @@ class RouteGenerator(val routeError: Double, val start: LatLng, val routeLengthM
      * gets real length of route and determines if can be suggested to the user
      */
     private fun canPickRoute(index: Int, route: List<LatLng>): Boolean {
+        return true
         val result = newRequest(geoApiContext).origin(start).destination(start).waypoints(*route.toTypedArray()).optimizeWaypoints(true).await()
         directions.plus(Pair(index, result))
 

@@ -1,5 +1,6 @@
 package com.example.niolenelson.running.utilities
 
+
 /**
  * Created by niolenelson on 7/22/18.
  */
@@ -16,6 +17,17 @@ object Haversine {
             dist = dist * 0.8684
         }
         return dist
+    }
+
+    private fun getUndoBaseMiles(distanceMiles: Double): Double {
+        return Math.cos(deg2rad(distanceMiles / (60.0 * 1.1515)))
+    }
+
+    fun getLngFromMilesDistance(lat1: Double, lon1: Double, lat2: Double, distanceMiles: Double): Double {
+        // TODO check/test
+        val base = getUndoBaseMiles(distanceMiles)
+        val theta = rad2deg(Math.acos(base - Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) / (Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)))))
+        return lon1 - theta
     }
 
     fun distanceMiles(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
