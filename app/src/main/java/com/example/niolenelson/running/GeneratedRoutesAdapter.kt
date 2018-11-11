@@ -9,14 +9,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.example.niolenelson.running.utilities.Route
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.route_item.view.*
 import com.google.maps.model.LatLng as JavaLatLng
 
-class GeneratedRoutesAdapter(private val items : ArrayList<JavaLatLng>, private val context: MapsActivity) : RecyclerView.Adapter<ViewHolder>() {
+class GeneratedRoutesAdapter(var items : ArrayList<Route>, private val context: MapsActivity) : RecyclerView.Adapter<ViewHolder>() {
     private var selectedPosition: Int = -1
 
-    fun getSelectedItem(): JavaLatLng? {
+    fun getSelectedItem(): Route? {
        if (selectedPosition > -1) {
            return items[selectedPosition]
        }
