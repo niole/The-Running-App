@@ -60,7 +60,6 @@ class MapsActivity :
 
         setStartingPoint(intent)
 
-        setGeneratedRoutesData(this.generated_routes_list)
         val getDirectionsButton = findViewById<Button>(R.id.get_directions_button)
         getDirectionsButton.setOnClickListener {
             if (selectedRoute > -1) {
@@ -87,16 +86,22 @@ class MapsActivity :
     }
 
     private fun setNextRoute() {
+        val button = findViewById<SelectableButton>(R.id.get_next_button)
+        val that = this
+        button.disable()
+        UIUtilities.Spinner.add(that, R.id.maps_activity_container)
         val nextRoute: Route? = routeGenerator.next()
         if (nextRoute != null) {
             if (generated_routes_list.adapter == null) {
-                generated_routes_list.adapter = GeneratedRoutesAdapter(routeGenerator.routes, this)
+                generated_routes_list.adapter = GeneratedRoutesAdapter(routeGenerator.routes, that)
             } else {
                 generated_routes_list.adapter.notifyDataSetChanged()
             }
         } else {
-            Toast.makeText(this, "Couldn\'t generate route. Try again.", Toast.LENGTH_LONG)
+            Toast.makeText(that, "Couldn\'t generate route. Try again.", Toast.LENGTH_LONG)
         }
+        button.enable()
+        UIUtilities.Spinner.remove(that, R.id.maps_activity_container)
     }
 
     private fun setStartingPoint(intent: Intent) {
@@ -104,12 +109,6 @@ class MapsActivity :
         val lng: Double = intent.getDoubleExtra("starting_lng", 0.toDouble())
         startingPoint = LatLng(lat, lng)
         javaStartingPoint = JavaLatLng(lat, lng)
-    }
-
-    private fun setGeneratedRoutesData(generated_routes_list: RecyclerView) {
-        launch(UI) {
-            setNextRoute()
-        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
