@@ -12,7 +12,6 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.maps.*
 import com.google.maps.model.LatLng as JavaLatLng
-import com.google.maps.DirectionsApi.newRequest
 import kotlinx.android.synthetic.main.activity_maps.*
 import java.io.Serializable
 
@@ -58,11 +57,7 @@ class MapsActivity :
         val getDirectionsButton = findViewById<Button>(R.id.get_directions_button)
         getDirectionsButton.setOnClickListener {
             if (selectedRoute > -1) {
-                val result = newRequest(geoContext)
-                        .origin(javaStartingPoint)
-                        .destination(javaStartingPoint)
-                        .waypoints(*routeGenerator.getRouteAtIndex(selectedRoute).points.toTypedArray())
-                        .optimizeWaypoints(true).await()
+                val result = routeGenerator.getRouteAtIndex(selectedRoute).directionsSoFar
 
                 UIUtilities.Spinner.add(this, R.id.maps_activity_container)
 
