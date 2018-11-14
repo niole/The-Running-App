@@ -56,7 +56,7 @@ class GeneratedRoutesAdapter(var items : ArrayList<Route>, private val context: 
             }
         }
 
-        holder?.tvGeneratedRoutesType?.text = "route ${position.toString()}"
+        holder?.tvGeneratedRoutesType?.text = "route $position"
         holder?.tvGeneratedRoutesType?.setOnClickListener {
             _ ->
             if (selectedPosition > -1) {

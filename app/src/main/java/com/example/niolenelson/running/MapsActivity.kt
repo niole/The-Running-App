@@ -4,7 +4,6 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -12,13 +11,9 @@ import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.maps.*
-import com.google.maps.model.Bounds
-import com.google.maps.model.SnappedPoint
 import com.google.maps.model.LatLng as JavaLatLng
 import com.google.maps.DirectionsApi.newRequest
 import kotlinx.android.synthetic.main.activity_maps.*
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
 import java.io.Serializable
 
 class MapsActivity :
@@ -88,6 +83,7 @@ class MapsActivity :
     private fun setNextRoute() {
         val button = findViewById<SelectableButton>(R.id.get_next_button)
         val that = this
+        // TODO make this happen without blocking UI thread first
         button.disable()
         UIUtilities.Spinner.add(that, R.id.maps_activity_container)
         val nextRoute: Route? = routeGenerator.next()

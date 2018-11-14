@@ -125,7 +125,6 @@ class RandomRouteGenerator(
     private fun isAcceptableDistance(distanceMeters: Double?): Boolean {
         if (distanceMeters != null) {
             val possibleDistanceMiles = Haversine.metersToMiles(distanceMeters)
-            println(possibleDistanceMiles)
             return possibleDistanceMiles <= distanceMiles + .5
         }
         return false
