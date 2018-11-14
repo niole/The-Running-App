@@ -13,6 +13,8 @@ import com.google.android.gms.maps.model.*
 import com.google.maps.*
 import com.google.maps.model.LatLng as JavaLatLng
 import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.launch
 import java.io.Serializable
 
 class MapsActivity :
@@ -78,21 +80,23 @@ class MapsActivity :
     private fun setNextRoute() {
         val button = findViewById<SelectableButton>(R.id.get_next_button)
         val that = this
-        // TODO make this happen without blocking UI thread first
         button.disable()
         UIUtilities.Spinner.add(that, R.id.maps_activity_container)
-        val nextRoute: Route? = routeGenerator.next()
-        if (nextRoute != null) {
-            if (generated_routes_list.adapter == null) {
-                generated_routes_list.adapter = GeneratedRoutesAdapter(routeGenerator.routes, that)
+        launch(UI) {
+            val nextRoute: Route? = routeGenerator.next()
+            button.enable()
+            UIUtilities.Spinner.remove(that, R.id.maps_activity_container)
+
+            if (nextRoute != null) {
+                if (generated_routes_list.adapter == null) {
+                    generated_routes_list.adapter = GeneratedRoutesAdapter(routeGenerator.routes, that)
+                } else {
+                    generated_routes_list.adapter.notifyDataSetChanged()
+                }
             } else {
-                generated_routes_list.adapter.notifyDataSetChanged()
+                Toast.makeText(that, "Couldn\'t generate route. Try again.", Toast.LENGTH_LONG)
             }
-        } else {
-            Toast.makeText(that, "Couldn\'t generate route. Try again.", Toast.LENGTH_LONG)
         }
-        button.enable()
-        UIUtilities.Spinner.remove(that, R.id.maps_activity_container)
     }
 
     private fun setStartingPoint(intent: Intent) {
