@@ -2,6 +2,7 @@ package com.example.niolenelson.running.utilities
 
 import com.google.maps.DirectionsApi
 import com.google.maps.GeoApiContext
+import com.google.maps.RoadsApi
 import com.google.maps.model.DirectionsResult
 import com.google.maps.model.LatLng
 
@@ -55,7 +56,7 @@ class RandomRouteGenerator(
 
     private fun getRandomAngle(possibleAngles: List<Double>): Double {
         if (possibleAngles.isNotEmpty()) {
-            return possibleAngles[Math.floor(Math.random() * possibleAngles.size).toInt()]
+            return possibleAngles.shuffled().first()
         }
         return 0.0
     }
@@ -105,6 +106,7 @@ class RandomRouteGenerator(
             if (acceptableDistance != null) {
                 val points = listOf(start).plus(waypoints)
                 if (isRouteComplete(acceptableDistance)) {
+                    println("COMPLETE ROUTE: points: $points, length: $acceptableDistance")
                     return Route(angle, points, directionsResult)
                 } else {
                     val filteredAngles = turningRadii
