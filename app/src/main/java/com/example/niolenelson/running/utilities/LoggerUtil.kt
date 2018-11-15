@@ -6,3 +6,7 @@ import java.util.logging.Logger
 fun AppCompatActivity.logger(): Logger {
     return Logger.getLogger(this.javaClass.name)
 }
+
+fun RandomRouteGenerator.logger(): Logger {
+    return Logger.getLogger(this.javaClass.name)
+}

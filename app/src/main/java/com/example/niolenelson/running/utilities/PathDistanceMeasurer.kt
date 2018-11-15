@@ -1,5 +1,7 @@
 package com.example.niolenelson.running.utilities
 
+import com.google.maps.model.LatLng
+
 /**
  * Created by niolenelson on 7/22/18.
  */
@@ -38,5 +40,19 @@ object Haversine {
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
     private fun rad2deg(rad: Double): Double {
         return rad * 180.0 / Math.PI
+    }
+
+    fun getLocationXDistanceFromLocationKM(latitude: Double, longitude: Double, distance: Double, bearing: Double): LatLng {
+        val R = 6378.1                         // Radius of the Earth
+        val brng = deg2rad(bearing)       // Convert bearing to radian
+        var lat = deg2rad(latitude)       // Current coords to radians
+        var lon = deg2rad(longitude)
+
+        // Do the math magic
+        lat = Math.asin(Math.sin(lat) * Math.cos(distance / R) + Math.cos(lat) * Math.sin(distance / R) * Math.cos(brng));
+        lon += Math.atan2(Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat), Math.cos(distance/R)-Math.sin(lat)*Math.sin(lat));
+
+        // Coords back to degrees and return
+        return LatLng(rad2deg(lat), rad2deg(lon))
     }
 }
