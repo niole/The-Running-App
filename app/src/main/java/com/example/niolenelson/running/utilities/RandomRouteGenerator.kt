@@ -10,17 +10,7 @@ data class Route(
         val angle: Double,
         val points: List<LatLng>,
         val directionsSoFar: DirectionsResult?
-) {
-    fun distance(): Double {
-        if (directionsSoFar != null) {
-            val legDistances = directionsSoFar.routes.map {
-                it.legs.sumByDouble { leg -> leg.distance.inMeters.toDouble() }
-            }
-            return legDistances[0]
-        }
-        return 0.0
-    }
-}
+)
 
 /**
  * generates random routes as we go
@@ -33,8 +23,6 @@ class RandomRouteGenerator(
         val distanceMiles: Double) {
 
     private val turningRadii: List<Double> = listOf(0.0, 30.0, 60.0, 90.0, 120.0, 140.0, 170.0, 300.0, 330.0)
-
-    private val stepDistance: Double = 0.5
 
     private val stepDistances = listOf(0.25, 0.5, 0.75)
 
