@@ -36,6 +36,8 @@ class RandomRouteGenerator(
 
     private val stepDistance: Double = 0.5
 
+    private val stepDistances = listOf(0.25, 0.5, 0.75)
+
     var routes: ArrayList<Route> = arrayListOf()
 
     fun next(): Route? {
@@ -67,6 +69,9 @@ class RandomRouteGenerator(
         return getNextPoint(turningRadii, listOf(start))
     }
 
+    private fun getStepDistance(): Double {
+        return stepDistances.shuffled().first()
+    }
 
     /**
      * depending on length of the route, only max turns of a certain size will matter
@@ -89,7 +94,8 @@ class RandomRouteGenerator(
             val nextPoint = Haversine.getLocationXDistanceFromLocationKM(
                             lastPoint.lat,
                             lastPoint.lng,
-                            stepDistance,
+                    //stepDistance,
+                            getStepDistance(),
                             angle
                     )
             val waypoints = route.subList(1, route.size).plus(nextPoint)
