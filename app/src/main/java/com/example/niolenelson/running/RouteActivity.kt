@@ -140,9 +140,8 @@ class RouteActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         geoContext = GeoApiContext.Builder().apiKey(getString(R.string.google_maps_key)).build()
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(com.google.android.gms.maps.model.LatLng(startingPoint.lat, startingPoint.lng)))
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15.toFloat()))
         mMap.uiSettings.setZoomControlsEnabled(true)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(com.google.android.gms.maps.model.LatLng(startingPoint.lat, startingPoint.lng), 15.toFloat()))
 
         setupLocation()
 
