@@ -130,10 +130,12 @@ class MapsActivity :
         }
         selectedRoute = index
 
-        val pathDataValues = routeGenerator.getRouteAtIndex(index).points
-        val newLine = mMap.addPolyline(RouteUtilities.makePolyline(pathDataValues))
-
-        currentPolylines = currentPolylines.plus(Pair(index, newLine))
+        val route = routeGenerator.getRouteAtIndex(index).directionsSoFar
+        if (route != null) {
+            val pathDataValues = route.routes[0].overviewPolyline
+            val newLine = mMap.addPolyline(RouteUtilities.makePolyline(pathDataValues.decodePath()))
+            currentPolylines = currentPolylines.plus(Pair(index, newLine))
+        }
     }
 
 }

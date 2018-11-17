@@ -24,12 +24,12 @@ class RandomRouteGenerator(
 
     private val turningRadii: List<Double> = listOf(0.0, 30.0, 60.0, 90.0, 120.0, 140.0, 170.0, 300.0, 330.0)
 
-    private val stepDistances = listOf(0.25, 0.5, 0.75)
+    private val stepDistances = listOf(0.25, 0.5, 0.75, 1.0)
 
     var routes: ArrayList<Route> = arrayListOf()
 
     fun next(): Route? {
-        val newRoute = generateNewRoute(listOf(start))
+        val newRoute = generateNewRoute()
         if (newRoute != null) {
             routes.add(newRoute)
             return newRoute
@@ -51,7 +51,7 @@ class RandomRouteGenerator(
         return 0.0
     }
 
-    private fun generateNewRoute(currentRoute: List<LatLng>): Route? {
+    private fun generateNewRoute(): Route? {
         // get next point based on the angle currently at and then angles
         // possible to use
         return getNextPoint(turningRadii, listOf(start))
@@ -82,7 +82,6 @@ class RandomRouteGenerator(
             val nextPoint = Haversine.getLocationXDistanceFromLocationKM(
                             lastPoint.lat,
                             lastPoint.lng,
-                    //stepDistance,
                             getStepDistance(),
                             angle
                     )
