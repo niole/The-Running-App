@@ -56,8 +56,7 @@ class MapsActivity :
 
         setStartingPoint(intent)
 
-        val getDirectionsButton = findViewById<Button>(R.id.get_directions_button)
-        getDirectionsButton.setOnClickListener {
+        findViewById<Button>(R.id.get_directions_button).setOnClickListener {
             if (selectedRoute > -1) {
                 val result = routeGenerator.getRouteAtIndex(selectedRoute).directionsSoFar
 

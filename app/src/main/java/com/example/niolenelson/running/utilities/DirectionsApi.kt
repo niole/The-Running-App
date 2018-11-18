@@ -1,15 +1,8 @@
 package com.example.niolenelson.running.utilities
 
-import android.os.Parcelable
 import com.google.maps.model.DirectionsResult
 import com.google.maps.model.EncodedPolyline
 import com.google.maps.model.LatLng
-import android.os.Parcel
-import android.graphics.Movie
-
-
-
-
 
 /**
  * Created by niolenelson on 9/22/18.
@@ -27,6 +20,12 @@ object LocalDirectionApi {
         val distance: String,
         val duration: String
     )
+
+    fun getDistance(directions: List<Direction>): Double {
+        return directions.fold(0.toDouble()) {
+            distance, nextDirection -> distance + Haversine.metersToMiles(nextDirection.distanceMeters.toDouble())
+        }
+    }
 
     fun getDirections(result: DirectionsResult): List<Direction> {
         return result.routes[0].legs.flatMap {
