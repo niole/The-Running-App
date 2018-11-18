@@ -1,6 +1,7 @@
 package com.example.niolenelson.running.utilities
 
 import android.app.Activity
+import android.widget.Toast
 import com.example.niolenelson.running.LocationSettingsUtilities
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationAvailability
@@ -49,8 +50,8 @@ class InteractiveDirectionsGenerator(activity: Activity, mMap: GoogleMap, val di
                     println("location is enabled")
                     startLocationUpdates()
                 } else {
-                    // TODO callback to the UI or send up a toast telling the user
                     println("location is not enabled")
+                    Toast.makeText(activity, "You will not be able to use this app to its fullest potential without enabling gps and location.", Toast.LENGTH_LONG)
                 }
             }
         })
