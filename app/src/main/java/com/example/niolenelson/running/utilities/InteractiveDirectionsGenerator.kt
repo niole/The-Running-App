@@ -1,77 +1,79 @@
 package com.example.niolenelson.running.utilities
 
 import android.app.Activity
-import android.widget.Toast
-import com.example.niolenelson.running.LocationSettingsUtilities
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationAvailability
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices.getFusedLocationProviderClient
 import com.google.android.gms.maps.GoogleMap
+import com.google.maps.model.LatLng
 
-class InteractiveDirectionsGenerator(activity: Activity, mMap: GoogleMap, val directions: List<LocalDirectionApi.Direction>) {
-    private var requestingLocationUpdates = false
+/**
+ * When the user is on a segment of a path, that path is highlighted on the map
+ */
+class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, val directions: List<LocalDirectionApi.Direction>) {
 
-    private var locationRequest = LocationSettingsUtilities.getLocationRequest()
+    private val locationUpdater: LocationUpdater = LocationUpdater(activity, mMap)
 
-    private val locationCallback: LocationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult?) {
-            if (locationResult != null) {
-                val lastLocation = locationResult.getLastLocation()
-                val lat = lastLocation.latitude
-                val lng = lastLocation.longitude
-                println(lat)
-                println(lng)
-            }
-        }
+    private val directionChunks: List<List<LatLng>> = directions.map { it.polyline.decodePath() }
 
-        override fun onLocationAvailability(locationAvailability: LocationAvailability) {
-            println("onLocationAvailability: isLocationAvailable = ${locationAvailability.isLocationAvailable}")
+    /**
+     * communicates what direction in the route the user travels in
+     * if 1, the user travels in the indexes positively
+     * if -1, the user travels through the directions negatively
+     * assumed to be positive to start
+     * if the user decides to go the opposite way in the route, it will change
+     */
+    private var travelDirection: Int = 1
+
+    /**
+     * the index of the chunk direction where it was last determined that the
+     * user is at
+     * initialized once location starts to be reported
+     */
+    private var likelyChunkIndex: Int = -1
+
+    /**
+     * the index of the chunk where the user started their route
+     * initialized after the user starts the run, will mostly likely be chunk 0
+     */
+    private var startChunkIndex: Int = -1
+
+    /**
+     * the index of the chunk which is the last chunk in the user's route
+     * initialized after start chunk is determined
+     */
+    private var endChunkIndex: Int = -1
+
+    init {
+        locationUpdater.onLocationUpdate {
+            lat, lng ->
+            println("Latitude $lat")
+            println("Longitude $lng")
         }
     }
 
-    private val fusedLocationClient: FusedLocationProviderClient = getFusedLocationProviderClient(activity)
-
-    init {
-        LocationPermissionHandler.getLocationPermission(activity, {
-            mMap.setMyLocationEnabled(true)
-
-            val task = LocationSettingsUtilities.confirmLocationPermissions(activity, locationRequest)
-
-            task.addOnSuccessListener { locationSettingsResponse ->
-                println(locationSettingsResponse.locationSettingsStates)
-                val locationSettingsStates = locationSettingsResponse.locationSettingsStates
-                val canTrackLocation = locationSettingsStates.isLocationUsable &&
-                        locationSettingsStates.isLocationPresent &&
-                        locationSettingsStates.isGpsPresent &&
-                        locationSettingsStates.isGpsUsable
-                if (canTrackLocation) {
-                    println("location is enabled")
-                    startLocationUpdates()
-                } else {
-                    println("location is not enabled")
-                    Toast.makeText(activity, "You will not be able to use this app to its fullest potential without enabling gps and location.", Toast.LENGTH_LONG)
-                }
-            }
-        })
+    fun getDirectionsFromLocation(lat: Double, lng: Double) {
+        // if two parts of the route are really close together, we can't have any
+        // hopping between parts of the routes
+        // what if a person gets off of the route but then gets back on the route?
+        // lets deal with that later
+        // if we're within a 5 meters of the current chunk perpendicularly, still in chunk
+        // if within .12 miles of next chunk, announce
+        val stillInChunk = true
+        if (stillInChunk) {
+            // check to see how far we are to next or previous chunk
+        } else {
+            // find out what chunk index we're at
+        }
     }
 
     fun stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback)
-        requestingLocationUpdates = false
+        locationUpdater.stopLocationUpdates()
     }
 
     fun startLocationUpdates() {
-        requestingLocationUpdates = true
-        println("start location updates")
-        fusedLocationClient.requestLocationUpdates(locationRequest,
-                locationCallback,
-                null)
+        locationUpdater.startLocationUpdates()
     }
 
     fun isRequestingLocationUpdates(): Boolean {
-        return requestingLocationUpdates
+        return locationUpdater.isRequestingLocationUpdates()
     }
 
 }
