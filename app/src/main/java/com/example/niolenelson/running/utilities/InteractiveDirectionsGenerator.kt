@@ -1,15 +1,19 @@
 package com.example.niolenelson.running.utilities
 
 import android.app.Activity
+import android.speech.tts.TextToSpeech
+import android.speech.tts.TextToSpeech.QUEUE_ADD
 import android.widget.Toast
 import com.google.android.gms.maps.model.LatLng as BaseLatLng
 import com.google.android.gms.maps.GoogleMap
 import com.google.maps.model.LatLng
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * When the user is on a segment of a path, that path is highlighted on the map
  */
-class InteractiveDirectionsGenerator(val activity: Activity, val mMap: GoogleMap, val directions: List<LocalDirectionApi.Direction>) {
+class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, val directions: List<LocalDirectionApi.Direction>) {
 
     private val minDiff: Double = 0.05
 
@@ -38,13 +42,13 @@ class InteractiveDirectionsGenerator(val activity: Activity, val mMap: GoogleMap
      */
     private var endChunkIndex: Int = -1
 
-    init {
-        //test()
+    private val speechCreator = TextToSpeech(activity, TextToSpeech.OnInitListener {
+        // test()
         locationUpdater.onLocationUpdate {
             lat, lng ->
             getDirectionsFromLocation(lat, lng)
         }
-    }
+    })
 
     fun getDirectionsFromLocation(lat: Double, lng: Double) {
         // if two parts of the route are really close together, we can't have any
@@ -142,11 +146,14 @@ class InteractiveDirectionsGenerator(val activity: Activity, val mMap: GoogleMap
     }
 
     private fun doFirstAnnouncement(chunkIndex: Int) {
-        println("ANNOUNCING $chunkIndex, ${directions[chunkIndex].htmlInstructions}")
+        val stepDirections = android.text.Html.fromHtml(directions[chunkIndex].htmlInstructions).toString()
+        println("ANNOUNCING $chunkIndex, $stepDirections")
+        speechCreator.speak(stepDirections, QUEUE_ADD, null)
     }
 
     fun stopLocationUpdates() {
         locationUpdater.stopLocationUpdates()
+        speechCreator.shutdown()
     }
 
     fun startLocationUpdates() {
@@ -165,7 +172,9 @@ class InteractiveDirectionsGenerator(val activity: Activity, val mMap: GoogleMap
             activity.runOnUiThread {
                 getDirectionsFromLocation(it.lat, it.lng)
             }
-            i += 1
+            Executors.newSingleThreadScheduledExecutor().schedule({
+                i += 1
+            }, 1000, TimeUnit.MILLISECONDS)
         }
         println(directions.joinToString { "  |  ${it.htmlInstructions}" })
     }
