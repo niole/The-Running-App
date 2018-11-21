@@ -62,12 +62,7 @@ class RandomRouteGenerator(
     }
 
     /**
-     * depending on length of the route, only max turns of a certain size will matter
-     * and because you go left in a circle or right in a circle, then depeding on the distance
-     * and the step distance, you should turn more or less
-     *
-     * To test this, let's make the turn radius limit always the same
-     * let's not
+     * pick random angle per point, repeat no angle picks
      */
     private fun getNextPoint(
             angleChoices: List<Double>,
