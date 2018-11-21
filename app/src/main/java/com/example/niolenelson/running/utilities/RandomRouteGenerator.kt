@@ -24,7 +24,7 @@ class RandomRouteGenerator(
 
     private val turningRadii: List<Double> = listOf(0.0, 30.0, 60.0, 90.0, 120.0, 140.0, 170.0, 300.0, 330.0)
 
-    private val stepDistances = listOf(0.25, 0.5, 0.75, 1.0)
+    private val stepDistances = getAllStepDistances()
 
     var routes: ArrayList<Route> = arrayListOf()
 
@@ -130,6 +130,12 @@ class RandomRouteGenerator(
             return possibleDistanceMiles <= distanceMiles + .5 && possibleDistanceMiles >= distanceMiles - .5
         }
         return false
+    }
+
+    private fun getAllStepDistances(): List<Double> {
+        val midPoint = distanceMiles / 2
+        val totalMultiplesOfQuarterMile = Math.max(1.0, Math.floor(midPoint / 0.25))
+        return (1 until (totalMultiplesOfQuarterMile + 1.0).toInt()).map { it * 0.25 }
     }
 
 }
