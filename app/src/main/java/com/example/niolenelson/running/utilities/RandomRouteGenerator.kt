@@ -2,9 +2,9 @@ package com.example.niolenelson.running.utilities
 
 import com.google.maps.DirectionsApi
 import com.google.maps.GeoApiContext
-import com.google.maps.RoadsApi
 import com.google.maps.model.DirectionsResult
 import com.google.maps.model.LatLng
+import com.google.maps.model.TravelMode
 
 data class Route(
         val angle: Double,
@@ -87,6 +87,7 @@ class RandomRouteGenerator(
                     )
             val waypoints = route.subList(1, route.size).plus(nextPoint)
             val request = DirectionsApi.newRequest(geoApiContext)
+                    .mode(TravelMode.WALKING)
                     .origin(start)
                     .waypoints(*waypoints.toTypedArray())
                     .destination(start)

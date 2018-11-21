@@ -69,7 +69,7 @@ class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, va
 
     private fun doAnnounceDirections(lat: Double, lng: Double) {
         val currentChunk = directionChunks[likelyChunkIndex]
-        if (shouldDoAnnouncement(currentChunk.last(), lat, lng)) {
+        if ((likelyChunkIndex == 0 && !announcedForChunks[0]) || shouldDoAnnouncement(currentChunk.last(), lat, lng)) {
             // going forwards
             announcedForChunks[likelyChunkIndex] = true
             doFirstAnnouncement(likelyChunkIndex)
