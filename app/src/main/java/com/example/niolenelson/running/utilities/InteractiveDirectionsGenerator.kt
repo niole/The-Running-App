@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
  */
 class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, val directions: List<LocalDirectionApi.Direction>) {
 
-    private val minDiff: Double = 0.05
+    private val minDiff: Double = 0.2
 
     private val locationUpdater: LocationUpdater = LocationUpdater(activity, mMap)
 
