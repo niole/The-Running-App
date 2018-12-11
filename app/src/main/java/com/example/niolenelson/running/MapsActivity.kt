@@ -116,11 +116,7 @@ class MapsActivity :
     }
 
     fun removeRouteAtIndex(index: Int) {
-        val line = currentPolylines.get(index)
-        if (line != null) {
-            line.remove()
-            currentPolylines = currentPolylines.minus(index)
-        }
+        mMap.clear()
     }
 
     fun selectRouteAtIndex(index: Int) {
@@ -129,11 +125,20 @@ class MapsActivity :
         }
         selectedRoute = index
 
-        val route = routeGenerator.getRouteAtIndex(index).directionsSoFar
+        val route = routeGenerator.getRouteAtIndex(index)
         if (route != null) {
-            val pathDataValues = route.routes[0].overviewPolyline
-            val newLine = mMap.addPolyline(RouteUtilities.makePolyline(pathDataValues.decodePath()))
-            currentPolylines = currentPolylines.plus(Pair(index, newLine))
+            // TODO what to do about alternative routes?
+            val pathDataValues = route.getEncodedPolyline()
+            if (pathDataValues != null) {
+                val newLine = mMap.addPolyline(RouteUtilities.makePolyline(pathDataValues.decodePath()))
+                currentPolylines = currentPolylines.plus(Pair(index, newLine))
+                route.elevationDetails.forEach {
+                    mMap.addPolyline(RouteUtilities.makePolyline(listOf(it.start, it.end), it.color()))
+                }
+
+            } else {
+                println("There is not polyline for route $route")
+            }
         }
     }
 

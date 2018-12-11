@@ -2,15 +2,21 @@ package com.example.niolenelson.running.utilities
 
 import com.google.maps.DirectionsApi
 import com.google.maps.GeoApiContext
-import com.google.maps.model.DirectionsResult
-import com.google.maps.model.LatLng
-import com.google.maps.model.TravelMode
+import com.google.maps.model.*
 
 data class Route(
         val angle: Double,
         val points: List<LatLng>,
-        val directionsSoFar: DirectionsResult?
-)
+        val directionsSoFar: DirectionsResult?,
+        val elevationDetails: List<Elevation>
+) {
+    fun getEncodedPolyline(): EncodedPolyline? {
+        if (directionsSoFar != null) {
+            return directionsSoFar.routes[0].overviewPolyline
+        }
+        return null
+    }
+}
 
 /**
  * generates random routes as we go
@@ -96,7 +102,8 @@ class RandomRouteGenerator(
                 val points = listOf(start).plus(waypoints)
                 if (isRouteComplete(acceptableDistance)) {
                     println("COMPLETE ROUTE: points: $points, length: $acceptableDistance")
-                    return Route(angle, points, directionsResult)
+                    val elevationResult = ElevationUtil.getElevationSeqments(geoApiContext, directionsResult)
+                    return Route(angle, points, directionsResult, elevationResult)
                 } else {
                     val filteredAngles = turningRadii
                     val completedRoute: Route? = getNextPoint(filteredAngles, points)

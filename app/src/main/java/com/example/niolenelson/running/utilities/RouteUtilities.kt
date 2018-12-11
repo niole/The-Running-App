@@ -11,6 +11,12 @@ import com.google.android.gms.maps.model.LatLng as GmsLatLng
 object RouteUtilities {
     private val COLOR_ORANGE_ARGB = -0xa80e9
 
+    fun makePolyline(points: List<LatLng>, color: Int): PolylineOptions {
+        return PolylineOptions()
+                .add(*points.map{ GmsLatLng(it.lat, it.lng) }.toTypedArray())
+                .color(color)
+    }
+
     fun makePolyline(points: List<LatLng>): PolylineOptions {
         return PolylineOptions()
                 .add(*points.map{ GmsLatLng(it.lat, it.lng) }.toTypedArray())
