@@ -2,16 +2,14 @@ package com.example.niolenelson.running
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.SupportMapFragment
-import com.example.niolenelson.running.utilities.LocalDirectionApi
-import com.example.niolenelson.running.utilities.RouteUtilities.makePolyline
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.maps.GeoApiContext
 import com.google.maps.model.DirectionsResult
 import com.google.maps.model.LatLng
-import com.example.niolenelson.running.utilities.InteractiveDirectionsGenerator
 
 /**
  * Created by niolenelson on 9/22/18.
@@ -31,6 +29,10 @@ class RouteActivity :
 
     private lateinit var directions: List<LocalDirectionApi.Direction>
 
+    private lateinit var directionsResult: DirectionsResult
+
+    private lateinit var elevationSegments: List<Elevation>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_route)
@@ -40,7 +42,8 @@ class RouteActivity :
         mapFragment.getMapAsync(this)
 
         startingPoint = intent.extras.get("startingPoint") as LatLng
-        val directionsResult = intent.extras.get("directionsResult") as DirectionsResult
+        directionsResult = intent.extras.get("directionsResult") as DirectionsResult
+        elevationSegments = intent.extras.get("elevationSegments") as List<Elevation>
         directions = LocalDirectionApi.getDirections(directionsResult)
 
         println("ROUTE DISTANCE")
@@ -65,9 +68,7 @@ class RouteActivity :
     }
 
     private fun drawRoute() {
-        val newLinePoints = directions.flatMap { direction -> direction.polyline.decodePath() }
-        val newLine = makePolyline(newLinePoints)
-        mMap.addPolyline(newLine)
+        RouteUtilities.setPolylineFromElevationDetails(elevationSegments, mMap)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {

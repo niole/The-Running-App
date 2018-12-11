@@ -6,13 +6,14 @@ import com.google.maps.GeoApiContext
 import com.google.maps.model.DirectionsResult
 import com.google.maps.model.ElevationResult
 import com.google.maps.model.LatLng
+import java.io.Serializable
 
 data class Elevation(
         val start: LatLng,
         val end: LatLng,
         val startElevation: Double,
         val endElevation: Double
-) {
+) : Serializable {
     fun diff(): Double {
         return endElevation - startElevation
     }

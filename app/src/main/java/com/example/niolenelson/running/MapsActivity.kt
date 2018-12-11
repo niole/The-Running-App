@@ -30,8 +30,6 @@ class MapsActivity :
 
     private lateinit var geoContext: GeoApiContext
 
-    private var currentPolylines: Map<Int, Polyline> = mapOf()
-
     private var selectedRoute = -1
 
     private lateinit var routeGenerator: RandomRouteGenerator
@@ -58,7 +56,8 @@ class MapsActivity :
 
         findViewById<Button>(R.id.get_directions_button).setOnClickListener {
             if (selectedRoute > -1) {
-                val result = routeGenerator.getRouteAtIndex(selectedRoute).directionsSoFar
+                val route = routeGenerator.getRouteAtIndex(selectedRoute)
+                val result = route.directionsSoFar
 
                 UIUtilities.Spinner.add(this, R.id.maps_activity_container)
 
@@ -66,6 +65,7 @@ class MapsActivity :
 
                 intent.putExtra("startingPoint", javaStartingPoint as Serializable)
                 intent.putExtra("directionsResult", result as Serializable)
+                intent.putExtra("elevationSegments", route.elevationDetails as Serializable)
 
                 startActivity(intent)
 
@@ -124,22 +124,8 @@ class MapsActivity :
             findViewById<SelectableButton>(R.id.get_directions_button).enable()
         }
         selectedRoute = index
-
         val route = routeGenerator.getRouteAtIndex(index)
-        if (route != null) {
-            // TODO what to do about alternative routes?
-            val pathDataValues = route.getEncodedPolyline()
-            if (pathDataValues != null) {
-                val newLine = mMap.addPolyline(RouteUtilities.makePolyline(pathDataValues.decodePath()))
-                currentPolylines = currentPolylines.plus(Pair(index, newLine))
-                route.elevationDetails.forEach {
-                    mMap.addPolyline(RouteUtilities.makePolyline(listOf(it.start, it.end), it.color()))
-                }
-
-            } else {
-                println("There is not polyline for route $route")
-            }
-        }
+        RouteUtilities.setPolylineFromElevationDetails(route.elevationDetails, mMap)
     }
 
 }

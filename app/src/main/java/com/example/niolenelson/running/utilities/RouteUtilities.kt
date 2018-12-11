@@ -1,5 +1,6 @@
 package com.example.niolenelson.running.utilities
 
+import com.google.android.gms.maps.GoogleMap
 import com.google.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.gms.maps.model.LatLng as GmsLatLng
@@ -10,6 +11,12 @@ import com.google.android.gms.maps.model.LatLng as GmsLatLng
 
 object RouteUtilities {
     private val COLOR_ORANGE_ARGB = -0xa80e9
+
+    fun setPolylineFromElevationDetails(es: List<Elevation>, mMap: GoogleMap) {
+        es.forEach {
+            mMap.addPolyline(RouteUtilities.makePolyline(listOf(it.start, it.end), it.color()))
+        }
+    }
 
     fun makePolyline(points: List<LatLng>, color: Int): PolylineOptions {
         return PolylineOptions()
