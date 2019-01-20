@@ -1,6 +1,8 @@
 package com.example.niolenelson.running
 
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.TextToSpeech.QUEUE_ADD
 import android.support.v7.app.AppCompatActivity
 import com.example.niolenelson.running.utilities.*
 import com.google.android.gms.maps.SupportMapFragment
@@ -64,7 +66,27 @@ class RouteActivity :
     }
 
     private fun setupLocation() {
-       interactiveDirectionsGenerator = InteractiveDirectionsGenerator(this, mMap, directions)
+        val speechCreator = TextToSpeech(this, TextToSpeech.OnInitListener {
+            println("INITIALIZED SPEAKER")
+        })
+
+        val speaker = { msg: String ->
+            speechCreator.speak(msg, QUEUE_ADD, null)
+        }
+
+        interactiveDirectionsGenerator = InteractiveDirectionsGenerator(
+                LocationUpdater(this, mMap),
+                speaker,
+                { -> speechCreator.shutdown() },
+                { -> println("ROUTE OVER") },
+                directions.map { direction ->
+                    Instruction(
+                        points = direction.polyline.decodePath(),
+                        humanDirections = android.text.Html.fromHtml(direction.htmlInstructions).toString()
+                    )
+                }
+        )
+
     }
 
     private fun drawRoute() {

@@ -10,6 +10,17 @@ data class Route(
         val directionsSoFar: DirectionsResult?,
         val elevationDetails: List<Elevation>
 ) {
+    fun distanceMeters(): Int {
+        if (directionsSoFar != null) {
+            return directionsSoFar.routes[0].legs.sumBy { it.distance.inMeters.toInt() }
+        }
+        return 0
+    }
+
+    fun distanceMiles(): Double {
+        return distanceMeters() / 1600.0
+    }
+
     fun getEncodedPolyline(): EncodedPolyline? {
         if (directionsSoFar != null) {
             return directionsSoFar.routes[0].overviewPolyline

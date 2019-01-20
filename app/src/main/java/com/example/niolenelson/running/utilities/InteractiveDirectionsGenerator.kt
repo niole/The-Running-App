@@ -1,27 +1,18 @@
 package com.example.niolenelson.running.utilities
 
-import android.app.Activity
-import android.speech.tts.TextToSpeech
-import android.speech.tts.TextToSpeech.QUEUE_ADD
-import android.widget.Toast
 import com.google.android.gms.maps.model.LatLng as BaseLatLng
-import com.google.android.gms.maps.GoogleMap
 import com.google.maps.model.LatLng
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
-/**
- * When the user is on a segment of a path, that path is highlighted on the map
- */
-class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, val directions: List<LocalDirectionApi.Direction>) {
+data class Instruction(
+        val points: List<LatLng>,
+        val humanDirections: String
+)
+
+class InteractiveDirectionsGenerator(val locationUpdater: LocationUpdater, val handleAnnoucement: (msg: String) -> Int, val stopAnnoucenemtns: () -> Unit, val onRouteEnd: () -> Unit, val directions: List<Instruction>) {
 
     private val minDiff: Double = 0.2
 
-    private val locationUpdater: LocationUpdater = LocationUpdater(activity, mMap)
-
-    private val directionChunks: List<List<LatLng>> = directions.map { it.polyline.decodePath() }
-
-    private var announcedForChunks: MutableList<Boolean> = MutableList(directionChunks.size) { false }
+    private var announcedForChunks: MutableList<Boolean> = MutableList(directions.size) { false }
 
     /**
      * the index of the chunk direction where it was last determined that the
@@ -42,13 +33,13 @@ class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, va
      */
     private var endChunkIndex: Int = -1
 
-    private val speechCreator = TextToSpeech(activity, TextToSpeech.OnInitListener {
-        // test()
-        locationUpdater.onLocationUpdate {
-            lat, lng ->
+    init {
+        locationUpdater.onLocationUpdate { lat, lng ->
             getDirectionsFromLocation(lat, lng)
         }
-    })
+        locationUpdater.startLocationUpdates()
+    }
+
 
     fun getDirectionsFromLocation(lat: Double, lng: Double) {
         // if two parts of the route are really close together, we can't have any
@@ -61,25 +52,24 @@ class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, va
         if (likelyChunkIndex > -1) {
             doAnnounceDirections(lat, lng)
             if (isRouteOver(lat, lng)) {
-                println("ROUTE OVER YAY")
-                Toast.makeText(activity, "You did it!", Toast.LENGTH_LONG)
+                onRouteEnd()
             }
         }
     }
 
     private fun doAnnounceDirections(lat: Double, lng: Double) {
-        val currentChunk = directionChunks[likelyChunkIndex]
-        if ((likelyChunkIndex == 0 && !announcedForChunks[0]) || shouldDoAnnouncement(currentChunk.last(), lat, lng)) {
+        val currentChunk = directions[likelyChunkIndex]
+        if ((likelyChunkIndex == 0 && !announcedForChunks[0]) || shouldDoAnnouncement(currentChunk.points.last(), lat, lng)) {
             // going forwards
             announcedForChunks[likelyChunkIndex] = true
             doFirstAnnouncement(likelyChunkIndex)
-            likelyChunkIndex = Math.min(likelyChunkIndex + 1, directionChunks.size - 1)
+            likelyChunkIndex = Math.min(likelyChunkIndex + 1, directions.size - 1)
         }
     }
 
     private fun isRouteOver(lat: Double, lng: Double): Boolean {
-        val currentChunk = directionChunks[likelyChunkIndex]
-        return shouldDoAnnouncement(currentChunk.last(), lat, lng)
+        val currentChunk = directions[likelyChunkIndex]
+        return shouldDoAnnouncement(currentChunk.points.last(), lat, lng)
     }
 
     private fun getCurrentChunkIndex(lat: Double, lng: Double): Int {
@@ -89,17 +79,17 @@ class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, va
             // assume at chunk 0 at first and if not, search everywhere
             likelyChunkIndex = 0
             startChunkIndex = 0
-            endChunkIndex = directionChunks.size - 1
+            endChunkIndex = directions.size - 1
         }
 
-        val likelyStartChunk = directionChunks[likelyChunkIndex]
+        val likelyStartChunk = directions[likelyChunkIndex].points
         if (!locationInChunk(lat, lng, likelyStartChunk)) {
 
             // pick from one chunk previous just in case we moved forwards too soon
             val startIndex = Math.max(likelyChunkIndex - 1, 0)
-            for (i in (startIndex until directionChunks.size)) {
-                val chunk = directionChunks[i]
-                if (locationInChunk(lat, lng, chunk)) {
+            for (i in (startIndex until directions.size)) {
+                val chunk = directions[i]
+                if (locationInChunk(lat, lng, chunk.points)) {
                     // hooray
                     return i
                 }
@@ -146,14 +136,12 @@ class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, va
     }
 
     private fun doFirstAnnouncement(chunkIndex: Int) {
-        val stepDirections = android.text.Html.fromHtml(directions[chunkIndex].htmlInstructions).toString()
-        println("ANNOUNCING $chunkIndex, $stepDirections")
-        speechCreator.speak(stepDirections, QUEUE_ADD, null)
+        handleAnnoucement(directions[chunkIndex].humanDirections)
     }
 
     fun stopLocationUpdates() {
         locationUpdater.stopLocationUpdates()
-        speechCreator.shutdown()
+        stopAnnoucenemtns()
     }
 
     fun startLocationUpdates() {
@@ -162,20 +150,5 @@ class InteractiveDirectionsGenerator(val activity: Activity, mMap: GoogleMap, va
 
     fun isRequestingLocationUpdates(): Boolean {
         return locationUpdater.isRequestingLocationUpdates()
-    }
-
-    private fun test() {
-        val points = directionChunks.flatten()
-        var i = 0
-        while (i < points.size) {
-            val it = points[i]
-            activity.runOnUiThread {
-                getDirectionsFromLocation(it.lat, it.lng)
-            }
-            Executors.newSingleThreadScheduledExecutor().schedule({
-                i += 1
-            }, 1000, TimeUnit.MILLISECONDS)
-        }
-        println(directions.joinToString { "  |  ${it.htmlInstructions}" })
     }
 }

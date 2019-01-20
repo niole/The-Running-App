@@ -125,6 +125,7 @@ class MapsActivity :
         }
         selectedRoute = index
         val route = routeGenerator.getRouteAtIndex(index)
+        Toast.makeText(this, "${route.distanceMiles()} miles", Toast.LENGTH_LONG)
         RouteUtilities.setPolylineFromElevationDetails(route.elevationDetails, mMap)
     }
 
