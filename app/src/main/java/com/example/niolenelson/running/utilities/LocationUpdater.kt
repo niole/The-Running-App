@@ -10,13 +10,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices.getFusedLocationProviderClient
 import com.google.android.gms.maps.GoogleMap
 
-typealias LocationUpdateCallback = (lat: Double, lng: Double) -> Unit
-
-class LocationUpdater(val activity: Activity, val mMap: GoogleMap) {
-    private var requestingLocationUpdates = false
-
-    private var locationUpdateCallback: LocationUpdateCallback = { _, _ -> }
-
+class LocationUpdater(val activity: Activity, val mMap: GoogleMap): LocationUpdaterBase() {
     private var locationRequest = LocationSettingsUtilities.getLocationRequest()
 
     private val locationCallback: LocationCallback = object : LocationCallback() {
@@ -60,24 +54,15 @@ class LocationUpdater(val activity: Activity, val mMap: GoogleMap) {
         })
     }
 
-    fun stopLocationUpdates() {
+    override fun stopLocationUpdates() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
         requestingLocationUpdates = false
         println("stop location updates")
     }
 
-    fun startLocationUpdates() {
+    override fun startLocationUpdates() {
         requestingLocationUpdates = true
         println("start location updates")
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
-    }
-
-
-    fun onLocationUpdate(cb: LocationUpdateCallback) {
-        locationUpdateCallback = cb
-    }
-
-    fun isRequestingLocationUpdates(): Boolean {
-        return requestingLocationUpdates
     }
 }

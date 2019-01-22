@@ -8,7 +8,7 @@ data class Instruction(
         val humanDirections: String
 )
 
-class InteractiveDirectionsGenerator(val locationUpdater: LocationUpdater, val handleAnnoucement: (msg: String) -> Int, val stopAnnoucenemtns: () -> Unit, val onRouteEnd: () -> Unit, val directions: List<Instruction>) {
+open class InteractiveDirectionsGenerator(val locationUpdater: LocationUpdaterBase, val handleAnnoucement: (msg: String) -> Int, val stopAnnoucenemtns: () -> Unit, val onRouteEnd: () -> Unit, val directions: List<Instruction>) {
 
     private val minDiff: Double = 0.2
 
